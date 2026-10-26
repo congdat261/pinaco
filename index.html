@@ -230,6 +230,14 @@ const $ = s => document.querySelector(s);
 const norm = s => String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/[\s\-_/().,]+/g,"");
 const esc = s => String(s ?? "").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const v = x => (x===""||x==null) ? "–" : x;
+/* Số theo ngôn ngữ, giữ nguyên số chữ số thập phân gốc: vi → dấu phẩy (7,2), en → dấu chấm (7.2) */
+function dec(x, vi){
+  if(x===""||x==null) return "";
+  const t=String(x).trim(), n=parseFloat(t.replace(",", "."));
+  if(isNaN(n) || !/^[-+]?\d+([.,]\d+)?$/.test(t)) return t;        // không phải số đơn thuần → giữ nguyên
+  const s=String(+n.toFixed(6));                                       // bỏ sai số dấu phẩy động (3.5000000001)
+  return vi ? s.replace(".", ",") : s;
+}
 function num(x, dec, vi){ if(x===""||x==null) return "–"; const n=parseFloat(String(x).replace(",", ".")); if(isNaN(n)) return x;
   const s=n.toFixed(dec); return vi ? s.replace(".", ",") : s; }
 function status(msg, cls){ const el=$("#info"); el.textContent=msg; el.className="info "+(cls||""); }
@@ -474,7 +482,7 @@ function pages(d, vi){
   const specTable = `<table class="spec">${COLS}
       ${sec(L.spec)}
       ${row(L.volt, u(F("Voltage"),"V"))}
-      ${(()=>{ const c=capacityRule(d); return row(vi?c.vi:c.en, u(F("Capacity"),c.unit)); })()}
+      ${(()=>{ const c=capacityRule(d); return row(vi?c.vi:c.en, u(dec(F("Capacity"),vi),c.unit)); })()}
       ${row(L.cca, u(F("CCA"),"A"))}
       ${row(L.rc, u(F("RC"),L.min))}
       ${dim(L.dim,L.len,u(F("Length"),"mm"))}${dim("",L.wid,u(F("Width"),"mm"))}${dim("",L.hei,u(F("Height"),"mm"))}${dim("",L.th,u(F("Total Height"),"mm"))}
