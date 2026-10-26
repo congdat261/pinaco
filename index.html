@@ -207,13 +207,13 @@ const CONFIG = {
   },
 
   // 5) Các Group (cột "Group") có in phần Đặc tính tự phóng. Group khác: bỏ phần này và trang được gộp còn 1 trang.
-  selfDischargeGroups: ["MF", "CMF"],
+  selfDischargeGroups: ["MF", "CMF", "SMF", "EFB"],
 
   // 6) Nhãn & đơn vị dòng "Dung lượng danh định" theo Group (không phân biệt hoa thường).
   //    Group không có trong danh sách dùng mặc định (dòng "default").
   capacityByGroup: {
     "GMVRLA": { vi:"Dung lượng danh định (10 giờ)", en:"Nominal Capacity (10Hr)", unit:"Ah"  },
-    "Sodium": { vi:"Công suất danh định",           en:"Nominal Power",           unit:"kWh" },
+    "SODIUM-GM": { vi:"Công suất danh định",           en:"Nominal Power",           unit:"kWh" },
     default:  { vi:"Dung lượng danh định (20 giờ)", en:"Nominal Capacity (20Hr)", unit:"Ah"  }
   },
 
