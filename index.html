@@ -48,7 +48,7 @@ select,.btn{padding:9px 12px;font-size:14px;border:1px solid var(--line);border-
 .hdr .co{padding:6pt 1.9mm 6pt;text-align:justify}
 .hdr .co .n{font-size:16pt;font-weight:bold;color:var(--b);line-height:1.1}
 .hdr .co .r{display:grid;grid-template-columns:92mm 1fr}
-.hdr .co a{color:var(--b);text-decoration:underline}
+.hdr .co a{color:var(--b);text-decoration:underline;cursor:pointer}
 .rule{width:185mm;margin-left:-2.5mm;flex:none;height:7px;border-top:4px solid var(--b);border-bottom:2px solid var(--b);margin-bottom:5mm}
 .ttl{text-align:center;font-weight:bold;font-size:25pt;color:var(--b);line-height:1.1;flex:none}
 .mdl{text-align:right;font-weight:bold;font-size:15pt;color:var(--b);margin:6pt 0;flex:none}
@@ -130,7 +130,7 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
   <button class="btn" id="prn" disabled>🖨 In</button>
   <button class="btn" id="refresh" title="Đọc lại dữ liệu từ file Excel nguồn">🔄 Làm mới</button>
   <button class="btn" id="signin" hidden>🔑 Đăng nhập Microsoft 365</button>
-  <button class="btn" id="load" title="Chọn file Excel trên máy">📂 Nạp Excel</button>
+  <button class="btn" id="load" title="Chọn file Excel trên máy" hidden>📂 Nạp Excel</button>
   <input type="file" id="file" accept=".xlsx,.xlsm,.xls">
   <span class="info" id="info"></span>
 </div>
@@ -423,17 +423,17 @@ const header = vi => { const c=vi?COMPANY.vi:COMPANY.en; return `
   <div class="hdr"><div class="logo"><img src="${LOGO}" alt=""></div><div class="co">
     <div class="n">${c.name}</div><div>${c.addr}</div>
     <div class="r"><span>Tel: ${COMPANY.tel}</span><span>Fax: ${COMPANY.fax}</span></div>
-    <div class="r"><span>E-mail: <a>${COMPANY.mail}</a></span><span>Web: <a>${COMPANY.web}</a></span></div>
+    <div class="r"><span>E-mail: <a href="mailto:${COMPANY.mail}">${COMPANY.mail}</a></span><span>Web: <a href="${COMPANY.web}" target="_blank" rel="noopener">${COMPANY.web}</a></span></div>
   </div></div><div class="rule"></div>`; };
 
 const LABELS = {
   vi:{ t:"THÔNG SỐ KỸ THUẬT", m:"CHỦNG LOẠI:", spec:"Đặc tính kỹ thuật", volt:"Điện thế danh định", cap:"Dung lượng danh định (20 giờ)",
-    cca:"Dòng khởi động lạnh (Cold Cranking Amps)", rc:"Dung lượng dự trữ (Reserve Capacity)", min:"phút", dim:"Kích thước",
+    cca:"Dòng khởi động lạnh (CCA)", rc:"Dung lượng dự trữ (Reserve Capacity)", min:"phút", dim:"Kích thước",
     len:"Dài", wid:"Rộng", hei:"Cao", th:"Tổng cao bao gồm cọc", nw:"Trọng lượng tịnh", gw:"Trọng lượng tổng", ap:"Khoảng",
     term:"Loại cọc", lay:"Bố trí cực tính", hd:"Chân đế", mat:"Vật liệu vỏ ắc quy", temp:"Nhiệt độ hoạt động bình thường",
     sd:"Đặc tính tự phóng", dr:"Bản vẽ", noimg:"(chưa có hình)", miss:"(không tải được hình)" },
   en:{ t:"TECHNICAL DATA SHEET", m:"MODEL:", spec:"Specification", volt:"Nominal Voltage", cap:"Nominal Capacity (20Hr)",
-    cca:"CCA (Cold Cranking Amps)", rc:"RC (Reserve Capacity)", min:"Min", dim:"Dimensions",
+    cca:"Cold Cranking Amps (CCA)", rc:"RC (Reserve Capacity)", min:"Min", dim:"Dimensions",
     len:"Length", wid:"Width", hei:"Container Height", th:"Total Height (with Terminal)", nw:"Net weight", gw:"Gross weight", ap:"Approx",
     term:"Terminal", lay:"Cell layout", hd:"Hold down", mat:"Container Material", temp:"Normal Operating Temp. Range",
     sd:"Self-discharge Characteristic", dr:"Drawing", noimg:"(no image)", miss:"(image not found)" }
@@ -579,6 +579,10 @@ $("#pdf").addEventListener("click",async()=>{
           let w=210, h=w*cv.height/cv.width; if(h>297){ h=297; w=h*cv.width/cv.height; }
           if(i) doc.addPage(); else doc.setPage(1);
           doc.addImage(cv.toDataURL("image/jpeg",0.95),"JPEG",(210-w)/2,0,w,h);
+          // giữ link bấm được (email, website) trong PDF
+          const pr=pages[i].getBoundingClientRect(), k=w/pr.width, x0=(210-w)/2;
+          pages[i].querySelectorAll("a[href]").forEach(a=>{ const r=a.getBoundingClientRect();
+            doc.link(x0+(r.left-pr.left)*k, (r.top-pr.top)*k, r.width*k, r.height*k, {url:a.href}); });
         }
         doc.save(pdfName()+".pdf");
       } finally { stage.classList.remove("pdfmode"); document.body.classList.remove("pdfexport"); }
