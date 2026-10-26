@@ -35,6 +35,7 @@ select,.btn{padding:9px 12px;font-size:14px;border:1px solid var(--line);border-
 .info{font-size:12px;color:var(--muted)}
 .info.ok{color:#1a7f37}.info.warn{color:#b35900}
 .imgbox .miss{color:#b35900}
+.imgbox .diag{display:block;margin-top:6px;font-size:9pt;font-style:normal;color:#8a5a00;max-width:160mm;word-break:break-all;line-height:1.35}
 #file{display:none}
 .stage{padding:24px 12px;display:flex;flex-direction:column;align-items:center;gap:24px}
 .placeholder{margin-top:80px;color:var(--muted);text-align:center}
@@ -129,8 +130,8 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
   <button class="btn" id="prn" disabled>🖨 In</button>
   <button class="btn" id="refresh" title="Đọc lại dữ liệu từ file Excel nguồn">🔄 Làm mới</button>
   <button class="btn" id="signin" hidden>🔑 Đăng nhập Microsoft 365</button>
-  <button class="btn" id="load" title="Chọn file Excel trên máy">📂 Nạp Excel</button>
-  <input type="file" id="file" accept=".xlsx,.xlsm,.xls">
+<!--  <button class="btn" id="load" title="Chọn file Excel trên máy">📂 Nạp Excel</button>
+  <input type="file" id="file" accept=".xlsx,.xlsm,.xls"> -->
   <span class="info" id="info"></span>
 </div>
 <div class="adv" id="adv">
@@ -182,8 +183,27 @@ const CONFIG = {
   //    Có thể dùng bất kỳ cột nào: {Model}, {SKU}, {Group}, {Container Type}, {Drawing}, {Self Discharge}...
   //    Để trống "" nếu cột tương ứng trong Excel đã chứa sẵn URL đầy đủ.
   images: {
-    selfDischarge: "https://pinacovn-my.sharepoint.com/:f:/r/personal/datbc_pinaco_com/Documents/Data/DATA SHEET/{Group}_SD.jpg",   // vd: "https://pinaco.sharepoint.com/sites/KyThuat/HinhAnh/SelfDischarge/{Group}.png"
-    drawing: "https://pinacovn-my.sharepoint.com/:f:/r/personal/datbc_pinaco_com/Documents/Data/DATA SHEET/{Group}/{Container Type}.jpg"          // vd: "https://pinaco.sharepoint.com/sites/KyThuat/HinhAnh/Drawing/{Container Type}.png"
+    // Mẫu đường dẫn: {TênCột} được thay bằng giá trị cột của sản phẩm đang chọn.
+    selfDischarge: "https://pinacovn-my.sharepoint.com/personal/datbc_pinaco_com/Documents/Data/DATA SHEET/{Group}_SD.jpg",
+
+    // Bản vẽ: chuyển từ công thức Excel ở cột Drawing.
+    //   Thư mục chứa file Excel \ Group \ Container Type + hậu tố + ".JPG"
+    //   Hậu tố: S (cọc STUD) · L/R (bố trí cực) · S (cọc T2 của N40/NS40/NS60/B2x) · H (vỏ CMF B20/B24 chân đế B1)
+    drawing: (d) => {
+      const up = x => String(x ?? "").trim().toUpperCase();
+      const group = String(d["Group"] ?? "").trim(), ct = String(d["Container Type"] ?? "").trim();
+      if(!group || !ct) return null;                                    // thiếu Group hoặc Container Type → không có hình
+      const g = up(group), term = up(d["Terminal"]), lay = String(d["Cell Layout"] ?? "").trim(), sku = up(d["SKU"]);
+      let s = "";
+      if(term === "STUD") s += "S";
+      if(["MF","CMF","SMF","AGM"].includes(g)){
+        if(lay === "0" || lay === "3")      s += /DIN/i.test(String(d["Type"] ?? "")) ? "" : "L";
+        else if(lay === "1" || lay === "4") s += g === "MF" ? "" : "R";
+      }
+      if(term === "T2" && (sku.startsWith("N40") || sku.startsWith("NS40") || sku.startsWith("NS60") || sku.includes("B2"))) s += "S";
+      if((up(ct) === "CMF B20" || up(ct) === "CMF B24") && up(d["Hold down"]) === "B1") s += "H";
+      return `${excelFolder()}/${group}/${ct}${s}.JPG`;
+    }
   },
 
   // 5) Các Group (cột "Group") có in phần Đặc tính tự phóng. Group khác: bỏ phần này và trang được gộp còn 1 trang.
@@ -221,15 +241,29 @@ function field(d, name){
   const k=Object.keys(d).find(k=>norm(k)===norm(name)); return k ? d[k] : "";
 }
 /* Ghép URL ảnh từ mẫu + dữ liệu. Nếu thiếu giá trị cột nào thì trả về null. */
-function imageUrl(tpl, d, fallbackCol){
+function imageUrl(tpl, d, fallbackCol){ return imageInfo(tpl, d, fallbackCol).url; }
+/* {url, why}: why = lý do không có URL (để hiển thị chẩn đoán trên màn hình) */
+/* Thư mục chứa file Excel nguồn (giống CELL("filename") trong Excel) */
+function excelFolder(){
+  const src = new URLSearchParams(location.search).get("src") || CONFIG.excelUrl || "";
+  return src.split("?")[0].replace(/\/:[a-z]:\/r\//i,"/").replace(/\/[^/]*$/,"");
+}
+function imageInfo(tpl, d, fallbackCol){
+  if(typeof tpl === "function"){
+    let url=null; try{ url=tpl(d); }catch(e){ return {url:null, why:"Lỗi trong công thức đường dẫn hình: "+e.message}; }
+    return url ? {url:String(url), why:""} : {url:null, why:"Thiếu dữ liệu để tạo tên file hình (Group / Container Type)"};
+  }
   if(tpl){
-    let missing=false;
+    const miss=[];
     const url = tpl.replace(/\{([^}]+)\}/g,(_,name)=>{ const val=String(field(d,name.trim())??"").trim();
-      if(!val||val.startsWith("#")) missing=true; return encodeURIComponent(val); });
-    return missing ? null : url;
+      if(!val||val.startsWith("#")) miss.push(name.trim()); return encodeURIComponent(val); });
+    return miss.length ? {url:null, why:`Cột ${miss.map(m=>"“"+m+"”").join(", ")} đang trống`} : {url, why:""};
   }
   const raw=String(field(d,fallbackCol)??"").trim();
-  return /^(https?:|data:)/i.test(raw) ? raw : null;
+  if(/^(https?:|data:)/i.test(raw)) return {url:raw, why:""};
+  return {url:null, why: raw
+    ? `Cột “${fallbackCol}” = “${raw}” không phải đường dẫn https://. Hãy khai báo mẫu đường dẫn trong CONFIG.images.`
+    : `Cột “${fallbackCol}” trống và CONFIG.images chưa khai báo mẫu đường dẫn`};
 }
 
 /* ============ MICROSOFT GRAPH (tuỳ chọn) ============ */
@@ -256,6 +290,8 @@ async function graphToken(){
 const shareId = url => "u!" + btoa(unescape(encodeURIComponent(url))).replace(/=+$/,"").replace(/\//g,"_").replace(/\+/g,"-");
 async function graphDownload(url){
   const tok = await graphToken(), H={headers:{Authorization:"Bearer "+tok}};
+  // Bỏ tiền tố link chia sẻ kiểu "/:f:/r/", "/:x:/r/", "/:i:/r/" nếu người dùng dán vào đường dẫn trực tiếp
+  url = url.replace(/\/:[a-z]:\/r\//i, "/");
   let clean=url; try{ clean=encodeURI(decodeURI(url)); }catch{}
   let r = await fetch(`https://graph.microsoft.com/v1.0/shares/${shareId(clean)}/driveItem/content`, H);
   if(!r.ok){
@@ -421,10 +457,11 @@ function pages(d, vi){
   const row=(k,val)=>`<tr><td>${k}</td><td class="gap"></td><td class="v" colspan="2">${val}</td></tr>`;
   const dim=(k,sub,val)=>`<tr><td>${k}</td><td class="gap"></td><td class="s">${sub}</td><td class="v">${val}</td></tr>`;
   const sec=label=>`<tr class="sec"><td class="h">${label}</td><td></td><td colspan="2"></td></tr>`;
-  const box=(url)=> url ? `<div class="imgbox" data-src="${esc(url)}" data-miss="${esc(L.miss)}"></div>` : `<div class="imgbox"><span class="ph">${L.noimg}</span></div>`;
+  const box=(info)=> info.url ? `<div class="imgbox" data-src="${esc(info.url)}" data-miss="${esc(L.miss)}"></div>`
+      : `<div class="imgbox"><span class="ph">${L.noimg}<small class="diag">${esc(info.why)}</small></span></div>`;
   const nw=F("Net weight"), gw=F("Gross Weight");
   const withSD = hasSelfDischarge(d);
-  const drawingUrl = imageUrl(CONFIG.images.drawing, d, "Drawing");
+  const drawingUrl = imageInfo(CONFIG.images.drawing, d, "Drawing");
 
   const specTable = `<table class="spec">${COLS}
       ${sec(L.spec)}
@@ -440,7 +477,7 @@ function pages(d, vi){
       ${row(L.hd, esc(v(F("Hold down"))))}
       ${row(L.mat, esc(v(F("Material"))))}
       ${row(L.temp, esc(CONFIG.operatingTemp).replace(/([℃℉])/g,'<span class="sym">$1</span>'))}
-      ${withSD ? sec(L.sd) + `<tr class="img"><td colspan="4">${box(imageUrl(CONFIG.images.selfDischarge, d, "Self Discharge"))}</td></tr>` : ""}
+      ${withSD ? sec(L.sd) + `<tr class="img"><td colspan="4">${box(imageInfo(CONFIG.images.selfDischarge, d, "Self Discharge"))}</td></tr>` : ""}
     </table>`;
   const drawing = `<table class="spec">${COLS}${sec(L.dr)}</table><div class="drawfill">${box(drawingUrl)}</div>`;
   const top = `${header(vi)}<div class="ttl">${L.t}</div><div class="mdl">${L.m} ${esc(d.Model)}</div>`;
@@ -456,18 +493,27 @@ const imgCache = new Map();
 function fetchImage(url){
   if(imgCache.has(url)) return imgCache.get(url);
   const p = (async()=>{
-    if(pca && account && isSharePoint(url)) return URL.createObjectURL(await (await graphDownload(url)).blob());
-    try{ const r=await fetch(url,{mode:"cors"}); if(r.ok) return URL.createObjectURL(await r.blob()); }catch{}
-    return url;   // máy chủ không cho CORS: vẫn hiển thị & in được, nhưng PDF tải về có thể thiếu ảnh
+    if(isSharePoint(url)){
+      if(!pca) throw new Error("hình nằm trên SharePoint/OneDrive nhưng chưa kết nối được Microsoft 365");
+      if(!account) throw new Error("hình nằm trên SharePoint/OneDrive — hãy bấm “Đăng nhập Microsoft 365”");
+      return URL.createObjectURL(await (await graphDownload(url)).blob());
+    }
+    try{ const r=await fetch(url,{mode:"cors"}); if(r.ok) return URL.createObjectURL(await r.blob());
+         if(r.status===404) throw new Error("không có file hình tại đường dẫn này (404) — kiểm tra tên file, chữ hoa/thường"); }
+    catch(e){ if(/404/.test(e.message)) throw e; }
+    return url;   // máy chủ không cho CORS: vẫn thử hiển thị trực tiếp
   })();
-  imgCache.set(url,p); return p;
+  imgCache.set(url,p); p.catch(()=>imgCache.delete(url)); return p;
 }
 function loadImages(){
   return Promise.all([...document.querySelectorAll(".imgbox[data-src]")].map(async box=>{
+    let reason="";
     try{
       const src = await fetchImage(box.dataset.src);
-      await new Promise((ok,fail)=>{ const im=new Image(); im.onload=()=>{box.innerHTML=""; box.appendChild(im); ok();}; im.onerror=fail; im.src=src; });
-    }catch{ box.innerHTML=`<span class="miss" title="${esc(box.dataset.src)}">${esc(box.dataset.miss)}</span>`; }
+      await new Promise((ok,fail)=>{ const im=new Image(); im.onload=()=>{box.innerHTML=""; box.appendChild(im); ok();};
+        im.onerror=()=>fail(new Error("trình duyệt không mở được file hình (sai đường dẫn hoặc không phải file ảnh)")); im.src=src; });
+    }catch(e){ reason=e.message||String(e);
+      box.innerHTML=`<span class="miss">${esc(box.dataset.miss)}<small class="diag">${esc(reason)}</small></span>`; }
   }));
 }
 let imagesReady = Promise.resolve();
