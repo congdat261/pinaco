@@ -747,19 +747,19 @@ function runAdvanced(){
 
 /* Cột của bảng kết quả: k = tên cột trong Excel, num = sắp xếp theo số */
 const RES_COLS = [
-  {k:"Model",        h:"Model / Chủng loại"},
-  {k:"Group",        h:"Nhóm"},
-  {k:"Length",       h:"Dài",            num:1},
-  {k:"Width",        h:"Rộng",           num:1},
-  {k:"Total Height", h:"Tổng cao",       num:1},
-  {k:"Capacity",     h:"Dung lượng",     num:1, unit:r=>capacityRule(r.d).unit},
+  {k:"Model",        h:"Chủng loại / Model"},
+  {k:"Group",        h:"Nhóm / Group"},
+  {k:"Length",       h:"Dài / Length",            num:1},
+  {k:"Width",        h:"Rộng / Width",           num:1},
+  {k:"Total Height", h:"Tổng cao / Total Height",       num:1},
+  {k:"Capacity",     h:"Dung lượng / Capacity",     num:1, unit:r=>capacityRule(r.d).unit},
   {k:"CCA",          h:"CCA",            num:1, unit:()=>"A"},
-  {k:"RC",           h:"RC",             num:1, unit:()=>"phút"},
+  {k:"RC",           h:"RC",             num:1, unit:()=>"phút / min"},
   {k:"Net weight",   h:"Net weight",     num:1, unit:()=>"kg", dec:2},
   {k:"Gross Weight", h:"Gross weight",   num:1, unit:()=>"kg", dec:2},
-  {k:"Cell Layout",  h:"Bố trí",         num:1},
-  {k:"Terminal",     h:"Cọc"},
-  {k:"Hold down",    h:"Chân đế"}
+  {k:"Cell Layout",  h:"Bố trí / Layout",         num:1},
+  {k:"Terminal",     h:"Cọc / Terminal"},
+  {k:"Hold down",    h:"Chân đế / Hold down"}
 ];
 let advSort = {k:"Model", dir:1};
 function sortAdvRows(){
