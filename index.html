@@ -216,7 +216,7 @@ const CONFIG = {
       const g = up(group), term = up(d["Terminal"]), lay = String(d["Cell Layout"] ?? "").trim(), sku = up(d["SKU"]);
       let s = "";
       if(term === "STUD") s += "S";
-      if(["MF","CMF","SMF","AGM"].includes(g)){
+      if(g.includes("MF") || g.includes("EFB") || g.includes("AGM") ){
         if(lay === "0" || lay === "3")      s += /DIN/i.test(String(d["Type"] ?? "")) ? "" : "L";
         else if(lay === "1" || lay === "4") s += g === "MF" ? "" : "R";
       }
