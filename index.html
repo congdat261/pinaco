@@ -218,22 +218,22 @@ const CONFIG = {
       if(term === "STUD") s += "S";
       if(g.includes("MF") || g.includes("EFB") || g.includes("AGM") ){
         if(lay === "0" || lay === "3")      s += /DIN/i.test(String(d["Type"] ?? "")) ? "" : "L";
-        else if(lay === "1" || lay === "4") s += g === "MF" ? "" : "R";
+        else if(lay === "1" || lay === "4") s += g === " MF" ? "" : "R";
       }
-      if(term === "T2" && (sku.startsWith("N40") || ct.includes("MF B2") || ct.includes("CMF B2"))) s += "S";
+      if(term === "T2" && (ct.includes("MF B2") || ct.includes("CMF B2"))) s += "S";
       if((up(ct) === "CMF B20" || up(ct) === "CMF B24") && up(d["Hold down"]) === "B1") s += "H";
       return `${excelFolder()}/DRAWING/${ct}${s}.JPG`;
     }
   },
 
   // 5) Các Group (cột "Group") có in phần Đặc tính tự phóng. Group khác: bỏ phần này và trang được gộp còn 1 trang.
-  selfDischargeGroups: ["MF", "CMF", "SMF", "EFB"],
+  selfDischargeGroups: ["ẮC QUY MF Ô TÔ", "ẮC QUY MF TẢI", "ẮC QUY CMF Ô TÔ", "ẮC QUY CMF TẢI" "ẮC QUY SMF", "ẮC QUY EFB"],
 
   // 6) Nhãn & đơn vị dòng "Dung lượng danh định" theo Group (không phân biệt hoa thường).
   //    Group không có trong danh sách dùng mặc định (dòng "default").
   capacityByGroup: {
-    "GMVRLA": { vi:"Dung lượng danh định (10 giờ)", en:"Nominal Capacity (10Hr)", unit:"Ah"  },
-    "SODIUM-GM": { vi:"Công suất danh định",           en:"Nominal Power",           unit:"kWh" },
+    "ẮC QUY VRLA GẮN MÁY": { vi:"Dung lượng danh định (10 giờ)", en:"Nominal Capacity (10Hr)", unit:"Ah"  },
+    "ẮC QUY SODIUM GẮN MÁY": { vi:"Công suất danh định",           en:"Nominal Power",           unit:"kWh" },
     default:  { vi:"Dung lượng danh định (20 giờ)", en:"Nominal Capacity (20Hr)", unit:"Ah"  }
   },
 
