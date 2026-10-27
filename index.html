@@ -101,6 +101,9 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 .res table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;min-width:760px}
 .res th{text-align:left;background:#e7eefb;color:var(--blue);font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;white-space:nowrap}
 .res th.n,.res td.n{text-align:right}
+.res th.sort{cursor:pointer;user-select:none}
+.res th.sort:hover{background:#d6e2f8}
+.res th.sort.on{background:#cfdcf6}
 .res td{padding:6px 8px;border-bottom:1px solid #e4e8f0;white-space:nowrap}
 .res td .t{color:var(--muted);font-size:12px;white-space:normal}
 .res tbody tr{cursor:pointer}
@@ -738,24 +741,68 @@ function runAdvanced(){
     rows = all.filter(r=>(!c.group||String(field(r.d,"Group")).trim()===c.group) && (!c.layout||String(field(r.d,"Cell Layout")).trim()===c.layout))
               .sort((a,b)=>a.score-b.score).slice(0,15);
   }
-  rows.sort(byModel);                                   // sắp xếp theo thứ tự abc của Model
   advRows=rows; advExact=exact;
-  const cell=(r,k,unit)=>{ const val=field(r.d,k); if(val===""||val==null) return `<td class="n">–</td>`;
-    const cls = r.flags[k]===true ? "ok" : r.flags[k]===false ? "off" : ""; return `<td class="n ${cls}">${esc(val)}${unit?" "+unit:""}</td>`; };
-  const n=rows.length;
+  renderAdvTable();
+}
+
+/* Cột của bảng kết quả: k = tên cột trong Excel, num = sắp xếp theo số */
+const RES_COLS = [
+  {k:"Model",        h:"Model / Chủng loại"},
+  {k:"Group",        h:"Nhóm"},
+  {k:"Length",       h:"Dài",            num:1},
+  {k:"Width",        h:"Rộng",           num:1},
+  {k:"Total Height", h:"Tổng cao",       num:1},
+  {k:"Capacity",     h:"Dung lượng",     num:1, unit:r=>capacityRule(r.d).unit},
+  {k:"CCA",          h:"CCA",            num:1, unit:()=>"A"},
+  {k:"RC",           h:"RC",             num:1, unit:()=>"phút"},
+  {k:"Net weight",   h:"Net weight",     num:1, unit:()=>"kg", dec:2},
+  {k:"Gross Weight", h:"Gross weight",   num:1, unit:()=>"kg", dec:2},
+  {k:"Cell Layout",  h:"Bố trí",         num:1},
+  {k:"Terminal",     h:"Cọc"},
+  {k:"Hold down",    h:"Chân đế"}
+];
+let advSort = {k:"Model", dir:1};
+function sortAdvRows(){
+  const c = RES_COLS.find(x=>x.k===advSort.k) || RES_COLS[0], dir = advSort.dir;
+  const val = r => { const x=field(r.d,c.k); return x===""||x==null ? null : c.num ? toNum(x) : String(x); };
+  advRows.sort((a,b)=>{
+    let va=val(a), vb=val(b);
+    if(c.num){ if(isNaN(va)) va=null; if(isNaN(vb)) vb=null; }
+    if(va===null && vb===null) return byModel(a,b);
+    if(va===null) return 1; if(vb===null) return -1;               // ô trống luôn nằm cuối
+    const r = c.num ? va-vb : va.localeCompare(vb,"vi",{numeric:true,sensitivity:"base"});
+    return r ? r*dir : byModel(a,b);
+  });
+}
+function renderAdvTable(){
+  sortAdvRows();
+  const n=advRows.length, exact=advExact;
+  const cell=(r,c)=>{ const raw=field(r.d,c.k);
+    if(raw===""||raw==null) return `<td${c.num?' class="n"':""}>–</td>`;
+    const cls = r.flags[c.k]===true ? "ok" : r.flags[c.k]===false ? "off" : "";
+    let val = c.dec!=null && !isNaN(toNum(raw)) ? toNum(raw).toFixed(c.dec) : raw;
+    const u = c.unit ? " "+c.unit(r) : "";
+    if(c.k==="Model") return `<td><b>${esc(r.d.Model)}</b><div class="t">${esc(r.d.Type)}</div></td>`;
+    return `<td class="${c.num?"n ":""}${cls}">${esc(val)}${esc(u)}</td>`; };
+  const arrow = c => c.k===advSort.k ? (advSort.dir>0 ? " ▲" : " ▼") : "";
   advRes.innerHTML = `<div class="bar"><p class="sum ${exact?"":"warn"}">${exact
-      ? `Tìm thấy <b>${n}</b> chủng loại, sắp xếp theo Model (A→Z). Bấm vào một dòng để xem data sheet.`
-      : `Không có chủng loại đáp ứng đủ mọi điều kiện. Dưới đây là ${n} chủng loại gần nhất (A→Z) — ô màu cam là thông số chưa đạt.`}</p>
+      ? `Tìm thấy <b>${n}</b> chủng loại. Bấm tiêu đề cột để sắp xếp, bấm một dòng để xem data sheet.`
+      : `Không có chủng loại đáp ứng đủ mọi điều kiện. Dưới đây là ${n} chủng loại gần nhất — ô màu cam là thông số chưa đạt.`}</p>
       <button type="button" class="btn" id="advxlsx">⬇ Xuất Excel (${n} dòng)</button></div>
     <div class="scroll"><table><thead><tr>
-      <th>Model / Chủng loại</th><th>Nhóm</th><th class="n">Dài</th><th class="n">Rộng</th><th class="n">Tổng cao</th>
-      <th class="n">Dung lượng</th><th class="n">CCA</th><th class="n">Bố trí</th><th>Cọc</th><th>Chân đế</th></tr></thead><tbody>
-      ${advRows.map((r,i)=>`<tr data-i="${i}"${current===r.d?' class="sel"':""}>
-        <td><b>${esc(r.d.Model)}</b><div class="t">${esc(r.d.Type)}</div></td><td>${esc(v(field(r.d,"Group")))}</td>
-        ${cell(r,"Length","")}${cell(r,"Width","")}${cell(r,"Total Height","")}${cell(r,"Capacity",capacityRule(r.d).unit)}${cell(r,"CCA","A")}
-        <td class="n">${esc(v(field(r.d,"Cell Layout")))}</td><td>${esc(v(field(r.d,"Terminal")))}</td><td>${esc(v(field(r.d,"Hold down")))}</td></tr>`).join("")}
+      ${RES_COLS.map(c=>`<th class="sort${c.num?" n":""}${c.k===advSort.k?" on":""}" data-k="${esc(c.k)}" title="Sắp xếp theo ${esc(c.h)}"
+         aria-sort="${c.k===advSort.k?(advSort.dir>0?"ascending":"descending"):"none"}">${esc(c.h)}${arrow(c)}</th>`).join("")}
+    </tr></thead><tbody>
+      ${advRows.map((r,i)=>`<tr data-i="${i}"${current===r.d?' class="sel"':""}>${RES_COLS.map(c=>cell(r,c)).join("")}</tr>`).join("")}
     </tbody></table></div>`;
 }
+advRes.addEventListener("click",ev=>{
+  const th=ev.target.closest("th.sort"); if(!th) return;
+  ev.stopPropagation();
+  const k=th.dataset.k; advSort = advSort.k===k ? {k, dir:-advSort.dir} : {k, dir:1};
+  const sc=advRes.querySelector(".scroll")?.scrollLeft||0;
+  renderAdvTable(); const el=advRes.querySelector(".scroll"); if(el) el.scrollLeft=sc;
+}, true);
 
 /* Xuất kết quả tìm kiếm ra file Excel (.xlsx) */
 const EXPORT_COLS = [
