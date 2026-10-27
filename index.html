@@ -106,6 +106,14 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 .res th.sort.on{background:#cfdcf6}
 .res td{padding:6px 8px;border-bottom:1px solid #e4e8f0;white-space:nowrap}
 .res td .t{color:var(--muted);font-size:12px;white-space:normal}
+/* Canh giữa toàn bộ phần tìm kiếm nâng cao */
+.adv form,.adv .res{margin-left:auto;margin-right:auto}
+.adv form > label{text-align:center;align-items:stretch}
+.adv form > label > input,.adv form > label > select{text-align:center;text-align-last:center}
+.adv .opts,.adv .acts{justify-content:center;text-align:center}
+.res .bar{justify-content:center}
+.res .bar .sum{text-align:center}
+.res .scroll{width:fit-content;max-width:100%;margin:0 auto}
 /* Canh lề bảng kết quả: tiêu đề canh giữa; dữ liệu canh giữa, riêng cột Model canh trái */
 .res th,.res th.n{text-align:center}
 .res td,.res td.n{text-align:center}
@@ -755,6 +763,7 @@ const RES_COLS = [      // h: tiêu đề cột theo ngôn ngữ đang chọn (E
   {k:"Group",        h:{vi:"Nhóm",             en:"Group"}},
   {k:"Length",       h:{vi:"Dài",              en:"Length"},       num:1},
   {k:"Width",        h:{vi:"Rộng",             en:"Width"},        num:1},
+  {k:"Height",       h:{vi:"Cao",              en:"Height"},       num:1},
   {k:"Total Height", h:{vi:"Tổng cao",         en:"Total Height"}, num:1},
   {k:"Capacity",     h:{vi:"Dung lượng",       en:"Capacity"},     num:1, unit:r=>capacityRule(r.d).unit},
   {k:"CCA",          h:{vi:"CCA",              en:"CCA"},          num:1, unit:()=>"A"},
