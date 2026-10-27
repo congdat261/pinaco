@@ -609,7 +609,7 @@ function render(d){
   imagesReady = loadImages();
 }
 function clearView(){ $("#zoombar").classList.remove("show"); current=null; q.value=""; $("#stage").innerHTML='<div class="placeholder">Chọn một sản phẩm ở ô phía trên để xem thông số kỹ thuật.</div>'; $("#pdf").disabled=$("#prn").disabled=true; }
-$("#lang").addEventListener("change",()=>current&&render(current));
+$("#lang").addEventListener("change",()=>{ if(current) render(current); if(advRows.length) renderAdvTable(); });
 
 /* ============ XUẤT PDF / IN ============ */
 const pdfName = () => "DATASHEET_" + String(current.Model).replace(/[^\w\-]+/g,"_");
@@ -733,7 +733,7 @@ const byModel=(a,b)=>String(a.d.Model).localeCompare(String(b.d.Model),"vi",{num
                   || String(a.d.Type).localeCompare(String(b.d.Type),"vi",{numeric:true,sensitivity:"base"});
 function runAdvanced(){
   const c=readCriteria();
-  if(!DATA.length){ advRes.innerHTML='<p class="sum warn">Chưa có dữ liệu — hãy đăng nhập Microsoft 365 để tải file Excel.</p>'; advRows=[]; return; }
+  if(!DATA.length){ advRes.innerHTML=`<p class="sum warn">${(resVi()?RES_TXT.vi:RES_TXT.en).nodata}</p>`; advRows=[]; return; }
   const all = DATA.map(d=>({d, ...evaluate(d,c)}));
   let rows = all.filter(r=>r.pass), exact=true;
   if(!rows.length){
@@ -746,21 +746,31 @@ function runAdvanced(){
 }
 
 /* Cột của bảng kết quả: k = tên cột trong Excel, num = sắp xếp theo số */
-const RES_COLS = [
-  {k:"Model",        h:"Chủng loại / Model"},
-  {k:"Group",        h:"Nhóm / Group"},
-  {k:"Length",       h:"Dài / Length",            num:1},
-  {k:"Width",        h:"Rộng / Width",           num:1},
-  {k:"Total Height", h:"Tổng cao / Total Height",       num:1},
-  {k:"Capacity",     h:"Dung lượng / Capacity",     num:1, unit:r=>capacityRule(r.d).unit},
-  {k:"CCA",          h:"CCA",            num:1, unit:()=>"A"},
-  {k:"RC",           h:"RC",             num:1, unit:()=>"phút / min"},
-  {k:"Net weight",   h:"Net weight",     num:1, unit:()=>"kg", dec:2},
-  {k:"Gross Weight", h:"Gross weight",   num:1, unit:()=>"kg", dec:2},
-  {k:"Cell Layout",  h:"Bố trí / Layout",         num:1},
-  {k:"Terminal",     h:"Cọc / Terminal"},
-  {k:"Hold down",    h:"Chân đế / Hold down"}
+const RES_COLS = [      // h: tiêu đề cột theo ngôn ngữ đang chọn (EN + VI → tiếng Anh)
+  {k:"Model",        h:{vi:"Chủng loại",       en:"Model"}},
+  {k:"Group",        h:{vi:"Nhóm",             en:"Group"}},
+  {k:"Length",       h:{vi:"Dài",              en:"Length"},       num:1},
+  {k:"Width",        h:{vi:"Rộng",             en:"Width"},        num:1},
+  {k:"Total Height", h:{vi:"Tổng cao",         en:"Total Height"}, num:1},
+  {k:"Capacity",     h:{vi:"Dung lượng",       en:"Capacity"},     num:1, unit:r=>capacityRule(r.d).unit},
+  {k:"CCA",          h:{vi:"CCA",              en:"CCA"},          num:1, unit:()=>"A"},
+  {k:"RC",           h:{vi:"RC",               en:"RC"},           num:1, unit:vi=>vi?"phút":"min"},
+  {k:"Net weight",   h:{vi:"Trọng lượng tịnh", en:"Net weight"},   num:1, unit:()=>"kg", dec:2},
+  {k:"Gross Weight", h:{vi:"Trọng lượng tổng", en:"Gross weight"}, num:1, unit:()=>"kg", dec:2},
+  {k:"Cell Layout",  h:{vi:"Bố trí",           en:"Layout"},       num:1},
+  {k:"Terminal",     h:{vi:"Cọc",              en:"Terminal"}},
+  {k:"Hold down",    h:{vi:"Chân đế",          en:"Hold down"}}
 ];
+const RES_TXT = {
+  vi:{ found:n=>`Tìm thấy <b>${n}</b> chủng loại. Bấm tiêu đề cột để sắp xếp, bấm một dòng để xem data sheet.`,
+       near:n=>`Không có chủng loại đáp ứng đủ mọi điều kiện. Dưới đây là ${n} chủng loại gần nhất — ô màu cam là thông số chưa đạt.`,
+       xlsx:n=>`⬇ Xuất Excel (${n} dòng)`, sortBy:"Sắp xếp theo", nodata:"Chưa có dữ liệu — hãy đăng nhập Microsoft 365 để tải file Excel." },
+  en:{ found:n=>`Found <b>${n}</b> product${n===1?"":"s"}. Click a column header to sort, click a row to view its data sheet.`,
+       near:n=>`No product meets every criterion. Showing the ${n} closest matches — orange cells do not meet the criteria.`,
+       xlsx:n=>`⬇ Export Excel (${n} row${n===1?"":"s"})`, sortBy:"Sort by", nodata:"No data yet — sign in to Microsoft 365 to load the Excel file." }
+};
+/* Ngôn ngữ của phần kết quả: chỉ chọn Tiếng Việt mới hiện tiếng Việt; EN hoặc EN + VI → tiếng Anh */
+const resVi = () => $("#lang").value === "vi";
 let advSort = {k:"Model", dir:1};
 function sortAdvRows(){
   const c = RES_COLS.find(x=>x.k===advSort.k) || RES_COLS[0], dir = advSort.dir;
@@ -776,22 +786,23 @@ function sortAdvRows(){
 }
 function renderAdvTable(){
   sortAdvRows();
-  const n=advRows.length, exact=advExact;
+  const vi=resVi(), T=vi?RES_TXT.vi:RES_TXT.en, n=advRows.length, exact=advExact;
+  const fmt=(x,c)=>{ const n=toNum(x); if(isNaN(n)) return String(x);
+    return c.dec!=null ? (vi ? n.toFixed(c.dec).replace(".", ",") : n.toFixed(c.dec)) : dec(x, vi); };
   const cell=(r,c)=>{ const raw=field(r.d,c.k);
+    if(c.k==="Model") return `<td><b>${esc(r.d.Model)}</b><div class="t">${esc(r.d.Type)}</div></td>`;
     if(raw===""||raw==null) return `<td${c.num?' class="n"':""}>–</td>`;
     const cls = r.flags[c.k]===true ? "ok" : r.flags[c.k]===false ? "off" : "";
-    let val = c.dec!=null && !isNaN(toNum(raw)) ? toNum(raw).toFixed(c.dec) : raw;
-    const u = c.unit ? " "+c.unit(r) : "";
-    if(c.k==="Model") return `<td><b>${esc(r.d.Model)}</b><div class="t">${esc(r.d.Type)}</div></td>`;
+    const val = c.num ? fmt(raw,c) : raw;
+    const u = c.unit ? " "+(c.k==="Capacity" ? c.unit(r) : c.unit(vi)) : "";
     return `<td class="${c.num?"n ":""}${cls}">${esc(val)}${esc(u)}</td>`; };
+  const head = c => vi ? c.h.vi : c.h.en;
   const arrow = c => c.k===advSort.k ? (advSort.dir>0 ? " ▲" : " ▼") : "";
-  advRes.innerHTML = `<div class="bar"><p class="sum ${exact?"":"warn"}">${exact
-      ? `Tìm thấy <b>${n}</b> chủng loại. Bấm tiêu đề cột để sắp xếp, bấm một dòng để xem data sheet.`
-      : `Không có chủng loại đáp ứng đủ mọi điều kiện. Dưới đây là ${n} chủng loại gần nhất — ô màu cam là thông số chưa đạt.`}</p>
-      <button type="button" class="btn" id="advxlsx">⬇ Xuất Excel (${n} dòng)</button></div>
+  advRes.innerHTML = `<div class="bar"><p class="sum ${exact?"":"warn"}">${exact ? T.found(n) : T.near(n)}</p>
+      <button type="button" class="btn" id="advxlsx">${T.xlsx(n)}</button></div>
     <div class="scroll"><table><thead><tr>
-      ${RES_COLS.map(c=>`<th class="sort${c.num?" n":""}${c.k===advSort.k?" on":""}" data-k="${esc(c.k)}" title="Sắp xếp theo ${esc(c.h)}"
-         aria-sort="${c.k===advSort.k?(advSort.dir>0?"ascending":"descending"):"none"}">${esc(c.h)}${arrow(c)}</th>`).join("")}
+      ${RES_COLS.map(c=>`<th class="sort${c.num?" n":""}${c.k===advSort.k?" on":""}" data-k="${esc(c.k)}" title="${T.sortBy} ${esc(head(c))}"
+         aria-sort="${c.k===advSort.k?(advSort.dir>0?"ascending":"descending"):"none"}">${esc(head(c))}${arrow(c)}</th>`).join("")}
     </tr></thead><tbody>
       ${advRows.map((r,i)=>`<tr data-i="${i}"${current===r.d?' class="sel"':""}>${RES_COLS.map(c=>cell(r,c)).join("")}</tr>`).join("")}
     </tbody></table></div>`;
@@ -805,26 +816,30 @@ advRes.addEventListener("click",ev=>{
 }, true);
 
 /* Xuất kết quả tìm kiếm ra file Excel (.xlsx) */
-const EXPORT_COLS = [
-  ["Model","Model"], ["Type","Chủng loại"], ["SKU","SKU"], ["Group","Nhóm"],
-  ["Voltage","Điện thế (V)"], ["Capacity","Dung lượng"], ["__unit","Đơn vị"], ["CCA","CCA (A)"], ["RC","RC (phút)"],
-  ["Length","Dài (mm)"], ["Width","Rộng (mm)"], ["Height","Cao (mm)"], ["Total Height","Tổng cao (mm)"],
-  ["Net weight","Trọng lượng tịnh (kg)"], ["Gross Weight","Trọng lượng tổng (kg)"],
-  ["Terminal","Loại cọc"], ["Cell Layout","Bố trí cực tính"], ["Hold down","Chân đế"], ["Container Type","Container Type"], ["Material","Vật liệu vỏ"]
+const EXPORT_COLS = [   // [cột Excel nguồn, tiêu đề tiếng Việt, tiêu đề tiếng Anh]
+  ["Model","Model","Model"], ["Type","Chủng loại","Type"], ["SKU","SKU","SKU"], ["Group","Nhóm","Group"],
+  ["Voltage","Điện thế (V)","Voltage (V)"], ["Capacity","Dung lượng","Capacity"], ["__unit","Đơn vị","Unit"],
+  ["CCA","CCA (A)","CCA (A)"], ["RC","RC (phút)","RC (min)"],
+  ["Length","Dài (mm)","Length (mm)"], ["Width","Rộng (mm)","Width (mm)"], ["Height","Cao (mm)","Container Height (mm)"],
+  ["Total Height","Tổng cao (mm)","Total Height (mm)"],
+  ["Net weight","Trọng lượng tịnh (kg)","Net weight (kg)"], ["Gross Weight","Trọng lượng tổng (kg)","Gross weight (kg)"],
+  ["Terminal","Loại cọc","Terminal"], ["Cell Layout","Bố trí cực tính","Cell layout"], ["Hold down","Chân đế","Hold down"],
+  ["Container Type","Container Type","Container Type"], ["Material","Vật liệu vỏ","Container Material"]
 ];
 function exportAdvanced(){
   if(!advRows.length || !window.XLSX) return;
   const toCell = x => { if(x===""||x==null) return ""; const t=String(x).trim();
     return /^[-+]?\d+([.,]\d+)?$/.test(t) ? +t.replace(",",".") : t; };     // số giữ dạng số để lọc/tính trong Excel
-  const aoa = [EXPORT_COLS.map(c=>c[1])].concat(advRows.map(r=>EXPORT_COLS.map(([k])=>
+  const hi = resVi() ? 1 : 2;
+  const aoa = [EXPORT_COLS.map(c=>c[hi])].concat(advRows.map(r=>EXPORT_COLS.map(([k])=>
       k==="__unit" ? capacityRule(r.d).unit : toCell(field(r.d,k)))));
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws["!cols"] = EXPORT_COLS.map(([k,h],i)=>({wch: Math.min(48, Math.max(h.length, ...aoa.slice(1).map(row=>String(row[i]??"").length)) + 2)}));
+  ws["!cols"] = EXPORT_COLS.map((c,i)=>({wch: Math.min(48, Math.max(c[hi].length, ...aoa.slice(1).map(row=>String(row[i]??"").length)) + 2)}));
   ws["!autofilter"] = {ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:aoa.length-1, c:EXPORT_COLS.length-1}})};
   ws["!freeze"] = {xSplit:1, ySplit:1};
-  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Ket qua tim kiem");
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, hi===1 ? "Ket qua tim kiem" : "Search results");
   const t=new Date(), p=n=>String(n).padStart(2,"0");
-  XLSX.writeFile(wb, `TimKiem_DataSheet_${t.getFullYear()}${p(t.getMonth()+1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}.xlsx`);
+  XLSX.writeFile(wb, `${hi===1?"TimKiem":"Search"}_DataSheet_${t.getFullYear()}${p(t.getMonth()+1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}.xlsx`);
 }
 advRes.addEventListener("click",ev=>{ if(ev.target.closest("#advxlsx")){ ev.stopPropagation(); exportAdvanced(); } }, true);
 advForm.addEventListener("submit",ev=>{ ev.preventDefault(); runAdvanced(); });
