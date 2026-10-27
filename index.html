@@ -222,7 +222,7 @@ const CONFIG = {
       }
       if(term === "T2" && (sku.startsWith("N40") || ct.includes("MF B2") || ct.includes("CMF B2"))) s += "S";
       if((up(ct) === "CMF B20" || up(ct) === "CMF B24") && up(d["Hold down"]) === "B1") s += "H";
-      return `${excelFolder()}/${group}/${ct}${s}.JPG`;
+      return `${excelFolder()}/DRAWING/${ct}${s}.JPG`;
     }
   },
 
