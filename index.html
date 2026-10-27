@@ -74,6 +74,17 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 .adv{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 16px;display:none}
 .adv.open{display:block}
 .adv form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px;align-items:end;max-width:1180px}
+.adv select{text-overflow:clip}
+.adv form > label > input,.adv form > label > select{height:36px}
+/* Màn hình rộng: tất cả điều kiện nằm trên 1 hàng; ô kích thước thu nhỏ, ô Nhóm rộng nhất */
+@media (min-width:1000px){
+  .adv form{grid-template-columns:repeat(3,minmax(84px,108px)) repeat(2,minmax(130px,165px)) minmax(230px,1fr) minmax(110px,140px)}
+}
+@media (max-width:999px){ .adv label.wide{grid-column:span 2} }
+@media (max-width:520px){ .adv label.wide{grid-column:1/-1} }
+.res .bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px}
+.res .bar .sum{margin:0}
+
 .adv label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
 .adv label b{color:var(--ink);font-size:13px;font-weight:600}
 .adv input,.adv select{padding:8px 10px;font-size:14px;border:1px solid var(--line);border-radius:6px;width:100%;font-variant-numeric:tabular-nums}
@@ -149,12 +160,12 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 </div>
 <div class="adv" id="adv">
   <form id="advform" autocomplete="off">
-    <label><b>Chiều dài (mm)</b><input type="number" name="Length" min="0" step="any" placeholder="vd: 304"></label>
-    <label><b>Chiều rộng (mm)</b><input type="number" name="Width" min="0" step="any" placeholder="vd: 173"></label>
-    <label><b>Tổng cao (mm)</b><input type="number" name="Total Height" min="0" step="any" placeholder="vd: 224"></label>
+    <label class="sm"><b>Dài (mm)</b><input type="number" name="Length" min="0" step="any" placeholder="vd: 304"></label>
+    <label class="sm"><b>Rộng (mm)</b><input type="number" name="Width" min="0" step="any" placeholder="vd: 173"></label>
+    <label class="sm"><b>Tổng cao (mm)</b><input type="number" name="Total Height" min="0" step="any" placeholder="vd: 224"></label>
     <label><b>Dung lượng (Ah) tối thiểu</b><input type="number" name="Capacity" min="0" step="any" placeholder="vd: 70"></label>
     <label><b>CCA (A) tối thiểu</b><input type="number" name="CCA" min="0" step="any" placeholder="vd: 600"></label>
-    <label><b>Nhóm (Group)</b><select name="group"><option value="">Tất cả</option></select></label>
+    <label class="wide"><b>Nhóm (Group)</b><select name="group"><option value="">Tất cả</option></select></label>
     <label><b>Bố trí cực tính</b><select name="layout"><option value="">Tất cả</option></select></label>
     <div class="opts">
       <span>Kích thước:</span>
@@ -165,7 +176,7 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
     <div class="acts">
       <button type="submit" class="btn primary">Tìm chủng loại phù hợp</button>
       <button type="reset" class="btn">Xoá điều kiện</button>
-      <span class="info">Bỏ trống ô nào thì không lọc theo ô đó.</span>
+      <span class="info">Bỏ trống ô nào thì không lọc theo ô đó. Để trống tất cả rồi bấm tìm sẽ hiển thị toàn bộ danh sách.</span>
     </div>
   </form>
   <div class="res" id="advres"></div>
@@ -714,25 +725,28 @@ function readCriteria(){
   c.group=E.group.value; c.layout=E.layout.value;
   return c;
 }
-let advRows=[];
+let advRows=[], advExact=true;
+const byModel=(a,b)=>String(a.d.Model).localeCompare(String(b.d.Model),"vi",{numeric:true,sensitivity:"base"})
+                  || String(a.d.Type).localeCompare(String(b.d.Type),"vi",{numeric:true,sensitivity:"base"});
 function runAdvanced(){
   const c=readCriteria();
-  const any = ADV_FIELDS.some(f=>!isNaN(c[f.k])) || c.group || c.layout;
-  if(!any){ advRes.innerHTML='<p class="sum warn">Nhập ít nhất một thông số (kích thước, dung lượng hoặc CCA) hoặc chọn nhóm.</p>'; return; }
+  if(!DATA.length){ advRes.innerHTML='<p class="sum warn">Chưa có dữ liệu — hãy đăng nhập Microsoft 365 để tải file Excel.</p>'; advRows=[]; return; }
   const all = DATA.map(d=>({d, ...evaluate(d,c)}));
-  let rows = all.filter(r=>r.pass).sort((a,b)=>a.score-b.score), exact=true;
+  let rows = all.filter(r=>r.pass), exact=true;
   if(!rows.length){
-    exact=false;
+    exact=false;     // không có kết quả đạt đủ điều kiện → lấy 15 chủng loại gần nhất
     rows = all.filter(r=>(!c.group||String(field(r.d,"Group")).trim()===c.group) && (!c.layout||String(field(r.d,"Cell Layout")).trim()===c.layout))
               .sort((a,b)=>a.score-b.score).slice(0,15);
   }
-  advRows=rows.slice(0,200);
+  rows.sort(byModel);                                   // sắp xếp theo thứ tự abc của Model
+  advRows=rows; advExact=exact;
   const cell=(r,k,unit)=>{ const val=field(r.d,k); if(val===""||val==null) return `<td class="n">–</td>`;
     const cls = r.flags[k]===true ? "ok" : r.flags[k]===false ? "off" : ""; return `<td class="n ${cls}">${esc(val)}${unit?" "+unit:""}</td>`; };
   const n=rows.length;
-  advRes.innerHTML = `<p class="sum ${exact?"":"warn"}">${exact
-      ? `Tìm thấy <b>${n}</b> chủng loại phù hợp${n>200?" (hiển thị 200 kết quả sát nhất)":""}, sắp xếp từ sát nhất. Bấm vào một dòng để xem data sheet.`
-      : `Không có chủng loại đáp ứng đủ mọi điều kiện. Dưới đây là ${n} chủng loại gần nhất — ô màu cam là thông số chưa đạt.`}</p>
+  advRes.innerHTML = `<div class="bar"><p class="sum ${exact?"":"warn"}">${exact
+      ? `Tìm thấy <b>${n}</b> chủng loại, sắp xếp theo Model (A→Z). Bấm vào một dòng để xem data sheet.`
+      : `Không có chủng loại đáp ứng đủ mọi điều kiện. Dưới đây là ${n} chủng loại gần nhất (A→Z) — ô màu cam là thông số chưa đạt.`}</p>
+      <button type="button" class="btn" id="advxlsx">⬇ Xuất Excel (${n} dòng)</button></div>
     <div class="scroll"><table><thead><tr>
       <th>Model / Chủng loại</th><th>Nhóm</th><th class="n">Dài</th><th class="n">Rộng</th><th class="n">Tổng cao</th>
       <th class="n">Dung lượng</th><th class="n">CCA</th><th class="n">Bố trí</th><th>Cọc</th><th>Chân đế</th></tr></thead><tbody>
@@ -742,6 +756,30 @@ function runAdvanced(){
         <td class="n">${esc(v(field(r.d,"Cell Layout")))}</td><td>${esc(v(field(r.d,"Terminal")))}</td><td>${esc(v(field(r.d,"Hold down")))}</td></tr>`).join("")}
     </tbody></table></div>`;
 }
+
+/* Xuất kết quả tìm kiếm ra file Excel (.xlsx) */
+const EXPORT_COLS = [
+  ["Model","Model"], ["Type","Chủng loại"], ["SKU","SKU"], ["Group","Nhóm"],
+  ["Voltage","Điện thế (V)"], ["Capacity","Dung lượng"], ["__unit","Đơn vị"], ["CCA","CCA (A)"], ["RC","RC (phút)"],
+  ["Length","Dài (mm)"], ["Width","Rộng (mm)"], ["Height","Cao (mm)"], ["Total Height","Tổng cao (mm)"],
+  ["Net weight","Trọng lượng tịnh (kg)"], ["Gross Weight","Trọng lượng tổng (kg)"],
+  ["Terminal","Loại cọc"], ["Cell Layout","Bố trí cực tính"], ["Hold down","Chân đế"], ["Container Type","Container Type"], ["Material","Vật liệu vỏ"]
+];
+function exportAdvanced(){
+  if(!advRows.length || !window.XLSX) return;
+  const toCell = x => { if(x===""||x==null) return ""; const t=String(x).trim();
+    return /^[-+]?\d+([.,]\d+)?$/.test(t) ? +t.replace(",",".") : t; };     // số giữ dạng số để lọc/tính trong Excel
+  const aoa = [EXPORT_COLS.map(c=>c[1])].concat(advRows.map(r=>EXPORT_COLS.map(([k])=>
+      k==="__unit" ? capacityRule(r.d).unit : toCell(field(r.d,k)))));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = EXPORT_COLS.map(([k,h],i)=>({wch: Math.min(48, Math.max(h.length, ...aoa.slice(1).map(row=>String(row[i]??"").length)) + 2)}));
+  ws["!autofilter"] = {ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:aoa.length-1, c:EXPORT_COLS.length-1}})};
+  ws["!freeze"] = {xSplit:1, ySplit:1};
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Ket qua tim kiem");
+  const t=new Date(), p=n=>String(n).padStart(2,"0");
+  XLSX.writeFile(wb, `TimKiem_DataSheet_${t.getFullYear()}${p(t.getMonth()+1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}.xlsx`);
+}
+advRes.addEventListener("click",ev=>{ if(ev.target.closest("#advxlsx")){ ev.stopPropagation(); exportAdvanced(); } }, true);
 advForm.addEventListener("submit",ev=>{ ev.preventDefault(); runAdvanced(); });
 advForm.addEventListener("reset",()=>setTimeout(()=>{ advRes.innerHTML=""; advRows=[]; },0));
 advRes.addEventListener("click",ev=>{
