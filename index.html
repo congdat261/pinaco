@@ -220,7 +220,7 @@ const CONFIG = {
         if(lay === "0" || lay === "3")      s += /DIN/i.test(String(d["Type"] ?? "")) ? "" : "L";
         else if(lay === "1" || lay === "4") s += g === "MF" ? "" : "R";
       }
-      if(term === "T2" && (sku.startsWith("N40") || sku.startsWith("NS40") || sku.startsWith("NS60") || sku.includes("B2"))) s += "S";
+      if(term === "T2" && (sku.startsWith("N40") || ct.includes("MF B2") || ct.includes("CMF B2"))) s += "S";
       if((up(ct) === "CMF B20" || up(ct) === "CMF B24") && up(d["Hold down"]) === "B1") s += "H";
       return `${excelFolder()}/${group}/${ct}${s}.JPG`;
     }
