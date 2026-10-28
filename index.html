@@ -252,8 +252,10 @@ const CONFIG = {
     }
   },
 
-  // 5) Các Group (cột "Group") có in phần Đặc tính tự phóng. Group khác: bỏ phần này và trang được gộp còn 1 trang.
-  selfDischargeGroups: ["ẮC QUY MF Ô TÔ", "ẮC QUY MF TẢI", "ẮC QUY CMF Ô TÔ", "ẮC QUY CMF TẢI", "ẮC QUY SMF", "ẮC QUY EFB"],
+  // 5) Các Group (cột "Group") KHÔNG hiển thị phần Đặc tính tự phóng (Self-discharge).
+  //    Group có trong danh sách: bỏ phần này và data sheet gộp còn 1 trang. Group khác: hiển thị (2 trang).
+  //    Không phân biệt chữ hoa/thường, khoảng trắng đầu/cuối. Để [] nếu mọi nhóm đều hiển thị.
+  hideSelfDischargeGroups: ["ẮC QUY SODIUM GẮN MÁY", "ẮC QUY DÂN DỤNG", "ẮC QUY GOLF CART", "ẮC QUY VRLA CN NHỎ" ],
 
   // 6) Nhãn & đơn vị dòng "Dung lượng danh định" theo Group (không phân biệt hoa thường).
   //    Group không có trong danh sách dùng mặc định (dòng "default").
@@ -508,7 +510,7 @@ function capacityRule(d){
   const k=Object.keys(m).find(k=>k!=="default" && k.trim().toUpperCase()===g);
   return m[k] || m.default;
 }
-const hasSelfDischarge = d => CONFIG.selfDischargeGroups.map(g=>String(g).trim().toUpperCase())
+const hasSelfDischarge = d => !(CONFIG.hideSelfDischargeGroups||[]).map(g=>String(g).trim().toUpperCase())
                                 .includes(String(field(d,"Group")??"").trim().toUpperCase());
 
 /* Cột của bảng theo đúng lưới trong Word (mm): 80 | 7+3 (khoảng trống) | 31.3+28.7 | 35 */
