@@ -161,9 +161,9 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
   </div>
   <button class="btn" id="advbtn" aria-expanded="false" aria-controls="adv">🔎 Tìm theo thông số</button>
   <select id="lang" title="Ngôn ngữ">
-    <option value="both">EN + VI (2 trang)</option>
-    <option value="en">English</option>
     <option value="vi">Tiếng Việt</option>
+    <option value="en">English</option>
+    <option value="both">EN + VI (2 trang)</option>
   </select>
   <button class="btn primary" id="pdf" disabled>⬇ Xuất PDF</button>
   <button class="btn" id="prn" disabled>🖨 In</button>
@@ -214,6 +214,12 @@ const CONFIG = {
   //    Ví dụ: "https://pinaco.sharepoint.com/:x:/s/KyThuat/EaBcD...?e=xyz"
   //    hoặc   "https://pinaco.sharepoint.com/sites/KyThuat/Shared Documents/Battery Specification.xlsx"
   excelUrl: "https://pinacovn-my.sharepoint.com/personal/datbc_pinaco_com/Documents/Data/DATA SHEET/Battery Specification.xlsx",
+
+  // 1b) Link chia sẻ THƯ MỤC chứa file Excel (và các hình) — loại "Những người ở PINACO có liên kết".
+  //     Có link này, mọi nhân viên đăng nhập M365 đều đọc được Excel + hình mà không cần cấp quyền riêng từng người.
+  //     Dán nguyên link lấy từ OneDrive (Chia sẻ → Sao chép liên kết), dạng https://…sharepoint.com/:f:/g/personal/…
+  //     Để "" thì trang đọc trực tiếp theo đường dẫn (chỉ người được chia sẻ trực tiếp mới xem được).
+  folderShareLink: "https://pinacovn-my.sharepoint.com/:f:/r/personal/datbc_pinaco_com/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fdatbc%5Fpinaco%5Fcom%2FDocuments%2FData%2FDATA%20SHEET&share=cgouoGRo8L8EQrk5WHCcY32OEgUCYLM0kcmFUnkoeeKopTu5lA",
 
   // 2) Tên sheet chứa dữ liệu (không phân biệt hoa thường, dấu cách: "DATA SHEET" = "DataSheet").
   sheetName: "DATA SHEET",
@@ -344,8 +350,44 @@ async function graphToken(){
   catch{ return (await pca.acquireTokenPopup({scopes:SCOPES, account})).accessToken; }
 }
 const shareId = url => "u!" + btoa(unescape(encodeURIComponent(url))).replace(/=+$/,"").replace(/\//g,"_").replace(/\+/g,"-");
+/* Mở link chia sẻ thư mục 1 lần (Prefer: redeemSharingLink = giống bấm mở link và chấp nhận),
+   lấy driveId + id của thư mục để đọc các file bên trong theo đường dẫn tương đối */
+let sharedFolder=null;
+function resolveSharedFolder(tok){
+  if(!sharedFolder) sharedFolder = (async()=>{
+    const r = await fetch(`https://graph.microsoft.com/v1.0/shares/${shareId(CONFIG.folderShareLink.trim())}/driveItem?$select=id,name,parentReference,folder`,
+      {headers:{Authorization:"Bearer "+tok, Prefer:"redeemSharingLink"}});
+    if(!r.ok) throw new Error(r.status===403||r.status===404
+      ? `không mở được link chia sẻ thư mục (Graph ${r.status}) — kiểm tra link là loại “Những người ở PINACO” và còn hiệu lực`
+      : "Graph "+r.status);
+    const j = await r.json();
+    if(!j.folder) throw new Error("folderShareLink phải là link chia sẻ THƯ MỤC, không phải link của một file");
+    return {driveId:j.parentReference.driveId, id:j.id};
+  })();
+  sharedFolder.catch(()=>{ sharedFolder=null; });
+  return sharedFolder;
+}
+/* Đường dẫn của url tính từ thư mục chứa file Excel, vd ".../DATA SHEET/DRAWING/CMF D31R.JPG" → "DRAWING/CMF D31R.JPG" */
+function relToExcelFolder(url){
+  const norm = u => { try{ return decodeURI(u.split("?")[0]).replace(/\/:[a-z]:\/[a-z]\//i,"/").toLowerCase(); }catch{ return u.toLowerCase(); } };
+  const base = norm(excelFolder()) + "/", full = norm(url);
+  if(!full.startsWith(base)) return null;
+  return decodeURI(url.split("?")[0].replace(/\/:[a-z]:\/[a-z]\//i,"/")).slice(base.length);
+}
 async function graphDownload(url){
   const tok = await graphToken(), H={headers:{Authorization:"Bearer "+tok}};
+  if(CONFIG.folderShareLink && CONFIG.folderShareLink.trim()){
+    const rel = relToExcelFolder(url);
+    if(rel!=null){
+      const f = await resolveSharedFolder(tok);
+      const p = rel.split("/").map(encodeURIComponent).join("/");
+      const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${f.driveId}/items/${f.id}:/${p}:/content`, H);
+      if(r.ok) return r;
+      if(r.status===404) throw new Error(`không có file “${rel.split("/").pop()}” trong thư mục chia sẻ (404) — kiểm tra tên file, chữ hoa/thường`);
+      if(r.status!==403) throw new Error("Graph "+r.status);
+      // 403: thử tiếp cách đọc trực tiếp bên dưới
+    }
+  }
   // Bỏ tiền tố link chia sẻ kiểu "/:f:/r/", "/:x:/r/", "/:i:/r/" nếu người dùng dán vào đường dẫn trực tiếp
   url = url.replace(/\/:[a-z]:\/r\//i, "/");
   let clean=url; try{ clean=encodeURI(decodeURI(url)); }catch{}
