@@ -576,8 +576,8 @@ function pages(d, vi){
       ${sec(L.spec)}
       ${row(L.volt, u(F("Voltage"),"V"))}
       ${(()=>{ const c=capacityRule(d); return row(vi?c.vi:c.en, u(dec(F("Capacity"),vi),c.unit)); })()}
-      ${row(L.cca, u(F("CCA"),"A"))}
       ${row(L.rc, u(F("RC"),L.min))}
+      ${row(L.cca, u(F("CCA"),"A"))}
       ${dim(L.dim,L.len,u(F("Length"),"mm"))}${dim("",L.wid,u(F("Width"),"mm"))}${dim("",L.hei,u(F("Height"),"mm"))}${dim("",L.th,u(F("Total Height"),"mm"))}
       ${row(L.nw, nw===""?"–":`${L.ap} ${num(nw,2,vi)} kg`)}
       ${row(L.gw, gw===""?"–":`${L.ap} ${num(gw,2,vi)} kg`)}
