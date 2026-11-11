@@ -181,15 +181,16 @@ body.pdfexport tr.screen-only{display:none}
     <label class="sm"><b>Dài (mm)</b><input type="number" name="Length" min="0" step="any" placeholder="vd: 304"></label>
     <label class="sm"><b>Rộng (mm)</b><input type="number" name="Width" min="0" step="any" placeholder="vd: 173"></label>
     <label class="sm"><b>Tổng cao (mm)</b><input type="number" name="Total Height" min="0" step="any" placeholder="vd: 224"></label>
-    <label><b>Dung lượng (Ah) tối thiểu</b><input type="number" name="Capacity" min="0" step="any" placeholder="vd: 70"></label>
-    <label><b>CCA (A) tối thiểu</b><input type="number" name="CCA" min="0" step="any" placeholder="vd: 600"></label>
+    <label><b id="capLbl">Dung lượng (Ah)</b><input type="number" name="Capacity" min="0" step="any" placeholder="vd: 70"></label>
+    <label><b id="ccaLbl">CCA (A)</b><input type="number" name="CCA" min="0" step="any" placeholder="vd: 600"></label>
     <label><b>Bố trí cực tính</b><select name="layout"><option value="">Tất cả</option></select></label>
     <label class="wide"><b>Nhóm (Group)</b><select name="group"><option value="">Tất cả</option></select></label>
     <div class="opts">
       <span>Kích thước:</span>
       <label><input type="radio" name="dimmode" value="fit" checked> Vừa khoang chứa (≤ kích thước nhập)</label>
       <label><input type="radio" name="dimmode" value="near"> Gần đúng ± <input type="number" name="tol" value="3" min="0" step="1"> mm</label>
-      <label><input type="checkbox" name="caphi" > Dung lượng & CCA không vượt quá <input type="number" name="hipct" value="10" min="0" step="5"> %</label>
+      <label title="Bỏ chọn: lấy các chủng loại có dung lượng ≥ giá trị nhập"><input type="checkbox" name="caphi"> Dung lượng ± <input type="number" name="hipct" value="10" min="0" step="5"> %</label>
+      <label title="Bỏ chọn: lấy các chủng loại có CCA ≥ giá trị nhập"><input type="checkbox" name="ccahi"> CCA ± <input type="number" name="ccapct" value="10" min="0" step="5"> %</label>
     </div>
     <div class="acts">
       <button type="submit" class="btn primary">Tìm chủng loại phù hợp</button>
@@ -774,9 +775,14 @@ function evaluate(d, c){
       if(c.dimmode==="fit"){ ok = got<=want; dev = ok ? (want-got)/want : (got-want)/want*5; }
       else { dev=Math.abs(got-want); ok = dev<=c.tol; dev = dev/want*(ok?1:5); }
     } else {
-      const hi = c.caphi ? want*(1+c.hipct/100) : Infinity;
-      ok = got>=want && got<=hi; dev = got>=want ? (got-want)/want*0.5 : (want-got)/want*5;
-      if(got>hi) dev += (got-hi)/want*2;
+      // Có đánh dấu ±%: lấy trong khoảng giá trị nhập ± %; không đánh dấu: lấy ≥ giá trị nhập (tối thiểu)
+      const pct = f.k==="CCA" ? (c.ccahi ? c.ccapct : null) : (c.caphi ? c.hipct : null);
+      if(pct!=null){
+        const lo=want*(1-pct/100), hi=want*(1+pct/100);
+        ok = got>=lo && got<=hi; dev = Math.abs(got-want)/want * (ok?1:5);
+      } else {
+        ok = got>=want; dev = ok ? (got-want)/want*0.5 : (want-got)/want*5;
+      }
     }
     flags[f.k]=ok; if(!ok) pass=false; score+=dev;
   }
@@ -789,6 +795,7 @@ function readCriteria(){
   for(const f of ADV_FIELDS) c[f.k]=toNum(E[f.k].value);
   c.dimmode=E.dimmode.value; c.tol=Math.max(0,toNum(E.tol.value)||0);
   c.caphi=E.caphi.checked; c.hipct=Math.max(0,toNum(E.hipct.value)||0);
+  c.ccahi=E.ccahi.checked; c.ccapct=Math.max(0,toNum(E.ccapct.value)||0);
   c.group=E.group.value; c.layout=E.layout.value;
   return c;
 }
@@ -911,6 +918,13 @@ function exportAdvanced(){
 }
 advRes.addEventListener("click",ev=>{ if(ev.target.closest("#advxlsx")){ ev.stopPropagation(); exportAdvanced(); } }, true);
 advForm.addEventListener("submit",ev=>{ ev.preventDefault(); runAdvanced(); });
+function syncTolLabels(){
+  const E=advForm.elements;
+  $("#capLbl").textContent = E.caphi.checked ? `Dung lượng (Ah) ± ${E.hipct.value||0}%` : "Dung lượng (Ah)";
+  $("#ccaLbl").textContent = E.ccahi.checked ? `CCA (A) ± ${E.ccapct.value||0}%` : "CCA (A)";
+}
+["caphi","hipct","ccahi","ccapct"].forEach(n=>advForm.elements[n].addEventListener("input",syncTolLabels));
+advForm.addEventListener("reset",()=>setTimeout(syncTolLabels,0));
 advForm.addEventListener("reset",()=>setTimeout(()=>{ advRes.innerHTML=""; advRows=[]; },0));
 advRes.addEventListener("click",ev=>{
   const tr=ev.target.closest("tr[data-i]"); if(!tr) return;
