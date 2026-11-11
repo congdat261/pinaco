@@ -50,7 +50,7 @@ select,.btn{padding:9px 12px;font-size:14px;border:1px solid var(--line);border-
 .hdr .co .r{display:grid;grid-template-columns:92mm 1fr}
 .hdr .co a{color:var(--b);text-decoration:underline;cursor:pointer}
 .rule{width:185mm;margin-left:-2.5mm;flex:none;height:7px;border-top:4px solid var(--b);border-bottom:2px solid var(--b);margin-bottom:5mm}
-.ttl{text-align:center;font-weight:bold;font-size:25pt;color:var(--b);line-height:1.1;flex:none}
+.ttl{text-align:center;font-weight:bold;font-size:25pt;color:var(--b);line-height:1.1;flex:none;margin: 0 0 20px 0}
 .mdl{text-align:right;font-weight:bold;font-size:15pt;color:var(--b);margin:6pt 0;flex:none}
 table.spec{width:185mm;margin-left:-2.5mm;border-collapse:collapse;table-layout:fixed;flex:none}
 table.spec td{padding:2pt 1.9mm;vertical-align:bottom;border-bottom:.5pt solid #000;height:5mm}
@@ -594,7 +594,8 @@ function pages(d, vi){
       ${withSD ? sec(L.sd) + `<tr class="img"><td colspan="4">${box(imageInfo(CONFIG.images.selfDischarge, d, "Self Discharge"))}</td></tr>` : ""}
     </table>`;
   const drawing = `<table class="spec">${COLS}${sec(L.dr)}</table><div class="drawfill">${box(drawingUrl)}</div>`;
-  const top = `${header(vi)}<div class="ttl">${L.t} - ${esc(d.Model)}</div><div class="mdl">${L.m} ${esc(d.Model)}</div>`;
+  const top = `${header(vi)}<div class="ttl">${L.t} - ${esc(d.Model)}</div>`;
+  // <div class="mdl">${L.m} ${esc(d.Model)}</div>`
 
   // Nhóm có Self-discharge: Drawing sang trang riêng (như file Word). Nhóm khác: gọn trong 1 trang.
   return withSD
