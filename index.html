@@ -78,7 +78,7 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 .adv form > label > input,.adv form > label > select{height:36px}
 /* Màn hình rộng: tất cả điều kiện nằm trên 1 hàng; ô kích thước thu nhỏ, ô Nhóm rộng nhất */
 @media (min-width:1000px){
-  .adv form{grid-template-columns:repeat(3,minmax(84px,108px)) repeat(2,minmax(130px,165px)) minmax(230px,1fr) minmax(110px,140px)}
+  .adv form{grid-template-columns:repeat(3,minmax(84px,108px)) repeat(2,minmax(130px,165px)) minmax(110px,140px) minmax(230px,1fr)}
 }
 @media (max-width:999px){ .adv label.wide{grid-column:span 2} }
 @media (max-width:520px){ .adv label.wide{grid-column:1/-1} }
@@ -180,8 +180,8 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
     <label class="sm"><b>Tổng cao (mm)</b><input type="number" name="Total Height" min="0" step="any" placeholder="vd: 224"></label>
     <label><b>Dung lượng (Ah) tối thiểu</b><input type="number" name="Capacity" min="0" step="any" placeholder="vd: 70"></label>
     <label><b>CCA (A) tối thiểu</b><input type="number" name="CCA" min="0" step="any" placeholder="vd: 600"></label>
-    <label class="wide"><b>Nhóm (Group)</b><select name="group"><option value="">Tất cả</option></select></label>
     <label><b>Bố trí cực tính</b><select name="layout"><option value="">Tất cả</option></select></label>
+    <label class="wide"><b>Nhóm (Group)</b><select name="group"><option value="">Tất cả</option></select></label>
     <div class="opts">
       <span>Kích thước:</span>
       <label><input type="radio" name="dimmode" value="fit" checked> Vừa khoang chứa (≤ kích thước nhập)</label>
@@ -816,6 +816,8 @@ const RES_COLS = [      // h: tiêu đề cột theo ngôn ngữ đang chọn (E
   {k:"RC",           h:{vi:"RC",               en:"RC"},           num:1, unit:vi=>vi?"phút":"min"},
   {k:"Net weight",   h:{vi:"Trọng lượng tịnh", en:"Net weight"},   num:1, unit:()=>"kg", dec:2},
   {k:"Gross Weight", h:{vi:"Trọng lượng tổng", en:"Gross weight"}, num:1, unit:()=>"kg", dec:2},
+  {k:"Positive Plates Quantity", h:{vi:"Số lá dương", en:"Positive plates"}, num:1},
+  {k:"Negative Plates Quantity", h:{vi:"Số lá âm",    en:"Negative plates"}, num:1},
   {k:"Cell Layout",  h:{vi:"Bố trí",           en:"Layout"},       num:1},
   {k:"Terminal",     h:{vi:"Cọc",              en:"Terminal"}},
   {k:"Hold down",    h:{vi:"Chân đế",          en:"Hold down"}}
@@ -882,6 +884,7 @@ const EXPORT_COLS = [   // [cột Excel nguồn, tiêu đề tiếng Việt, ti�
   ["Length","Dài (mm)","Length (mm)"], ["Width","Rộng (mm)","Width (mm)"], ["Height","Cao (mm)","Container Height (mm)"],
   ["Total Height","Tổng cao (mm)","Total Height (mm)"],
   ["Net weight","Trọng lượng tịnh (kg)","Net weight (kg)"], ["Gross Weight","Trọng lượng tổng (kg)","Gross weight (kg)"],
+  ["Positive Plates Quantity","Số lá dương","Positive plate quantity"], ["Negative Plates Quantity","Số lá âm","Negative plate quantity"],
   ["Terminal","Loại cọc","Terminal"], ["Cell Layout","Bố trí cực tính","Cell layout"], ["Hold down","Chân đế","Hold down"],
   ["Container Type","Container Type","Container Type"], ["Material","Vật liệu vỏ","Container Material"]
 ];
