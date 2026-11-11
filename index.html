@@ -181,8 +181,8 @@ body.pdfexport tr.screen-only{display:none}
     <label class="sm"><b>Dài (mm)</b><input type="number" name="Length" min="0" step="any" placeholder="vd: 304"></label>
     <label class="sm"><b>Rộng (mm)</b><input type="number" name="Width" min="0" step="any" placeholder="vd: 173"></label>
     <label class="sm"><b>Tổng cao (mm)</b><input type="number" name="Total Height" min="0" step="any" placeholder="vd: 224"></label>
-    <label><b id="capLbl">Dung lượng (Ah)</b><input type="number" name="Capacity" min="0" step="any" placeholder="vd: 70"></label>
-    <label><b id="ccaLbl">CCA (A)</b><input type="number" name="CCA" min="0" step="any" placeholder="vd: 600"></label>
+    <label><b id="capLbl">Dung lượng (Ah) tối thiểu</b><input type="number" name="Capacity" min="0" step="any" placeholder="vd: 70"></label>
+    <label><b id="ccaLbl">CCA (A) tối thiểu</b><input type="number" name="CCA" min="0" step="any" placeholder="vd: 600"></label>
     <label><b>Bố trí cực tính</b><select name="layout"><option value="">Tất cả</option></select></label>
     <label class="wide"><b>Nhóm (Group)</b><select name="group"><option value="">Tất cả</option></select></label>
     <div class="opts">
@@ -920,8 +920,8 @@ advRes.addEventListener("click",ev=>{ if(ev.target.closest("#advxlsx")){ ev.stop
 advForm.addEventListener("submit",ev=>{ ev.preventDefault(); runAdvanced(); });
 function syncTolLabels(){
   const E=advForm.elements;
-  $("#capLbl").textContent = E.caphi.checked ? `Dung lượng (Ah) ± ${E.hipct.value||0}%` : "Dung lượng (Ah)";
-  $("#ccaLbl").textContent = E.ccahi.checked ? `CCA (A) ± ${E.ccapct.value||0}%` : "CCA (A)";
+  $("#capLbl").textContent = E.caphi.checked ? `Dung lượng (Ah) ± ${E.hipct.value||0}%` : "Dung lượng (Ah) tối thiểu";
+  $("#ccaLbl").textContent = E.ccahi.checked ? `CCA (A) ± ${E.ccapct.value||0}%` : "CCA (A) tối thiểu";
 }
 ["caphi","hipct","ccahi","ccapct"].forEach(n=>advForm.elements[n].addEventListener("input",syncTolLabels));
 advForm.addEventListener("reset",()=>setTimeout(syncTolLabels,0));
