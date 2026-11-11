@@ -595,7 +595,7 @@ function pages(d, vi){
       ${withSD ? sec(L.sd) + `<tr class="img"><td colspan="4">${box(imageInfo(CONFIG.images.selfDischarge, d, "Self Discharge"))}</td></tr>` : ""}
     </table>`;
   const drawing = `<table class="spec">${COLS}${sec(L.dr)}</table><div class="drawfill">${box(drawingUrl)}</div>`;
-  const top = `${header(vi)}<div class="ttl">${L.t} - ${esc(d.Model)}</div>`;
+  const top = `${header(vi)}<div class="ttl">${L.t}</div><div class="mdl">${L.m} ${esc(d.Model)}</div>`;
   // <div class="mdl">${L.m} ${esc(d.Model)}</div>`
 
   // Nhóm có Self-discharge: Drawing sang trang riêng (như file Word). Nhóm khác: gọn trong 1 trang.
