@@ -588,8 +588,8 @@ function pages(d, vi){
       ${row(L.lay, esc(v(F("Cell Layout"))))}
       ${row(L.hd, esc(v(F("Hold down"))))}
       ${row(L.mat, esc(v(F("Material"))))}
-      ${row(L.pos, esc(v(F("Positive Plates Quantity")))).replace("<tr>",'<tr class="screen-only">')}
-      ${row(L.neg, esc(v(F("Negative Plates Quantity")))).replace("<tr>",'<tr class="screen-only">')}
+      ${row(L.pos, esc(v(F("Positive Plate Quantity")))).replace("<tr>",'<tr class="screen-only">')}
+      ${row(L.neg, esc(v(F("Negative Plate Quantity")))).replace("<tr>",'<tr class="screen-only">')}
       ${row(L.temp, esc(CONFIG.operatingTemp).replace(/([℃℉])/g,'<span class="sym">$1</span>'))}
       ${withSD ? sec(L.sd) + `<tr class="img"><td colspan="4">${box(imageInfo(CONFIG.images.selfDischarge, d, "Self Discharge"))}</td></tr>` : ""}
     </table>`;
