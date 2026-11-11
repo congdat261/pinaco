@@ -542,12 +542,12 @@ const LABELS = {
   vi:{ t:"THÔNG SỐ KỸ THUẬT", m:"CHỦNG LOẠI:", spec:"Đặc tính kỹ thuật", volt:"Điện thế danh định", cap:"Dung lượng danh định (20 giờ)",
     cca:"Dòng khởi động lạnh (CCA)", rc:"Dung lượng dự trữ (RC)", min:"phút", dim:"Kích thước",
     len:"Dài", wid:"Rộng", hei:"Cao", th:"Tổng cao bao gồm cọc", nw:"Trọng lượng tịnh", gw:"Trọng lượng tổng", ap:"Khoảng",
-    term:"Loại cọc", lay:"Bố trí cực tính", hd:"Chân đế", mat:"Vật liệu vỏ, nắp ắc quy", pos:"Số lá cực dương", neg:"Số lá cực âm", temp:"Nhiệt độ hoạt động tối ưu",
+    term:"Loại cọc", lay:"Bố trí cực tính", hd:"Chân đế", mat:"Vật liệu vỏ, nắp ắc quy", pos:"Số thẻ dương", neg:"Số thẻ âm", temp:"Nhiệt độ hoạt động tối ưu",
     sd:"Đặc tính tự phóng", dr:"Bản vẽ", noimg:"(chưa có hình)", miss:"(không tải được hình)" },
   en:{ t:"TECHNICAL DATA SHEET", m:"MODEL:", spec:"Specification", volt:"Nominal Voltage", cap:"Nominal Capacity (20Hr)",
     cca:"Cold Cranking Amps (CCA)", rc:"Reserve Capacity (RC)", min:"Min", dim:"Dimensions",
-    len:"Length", wid:"Width", hei:"Container Height", th:"Total Height (with Terminal)", nw:"Net weight", gw:"Gross weight", ap:"Approx",
-    term:"Terminal", lay:"Cell layout", hd:"Hold down", mat:"Battery Casing Material", pos:"Positive plate quantity", neg:"Negative plate quantity", temp:"Normal Operating Temp. Range",
+    len:"Length", wid:"Width", hei:"Container Height", th:"Total Height (with Terminal)", nw:"Net Weight", gw:"Gross Weight", ap:"Approx",
+    term:"Terminal", lay:"Layout", hd:"Hold Down", mat:"Battery Casing Material", pos:"Positive Plate Quantity", neg:"Negative Plate Quantity", temp:"Normal Operating Temp. Range",
     sd:"Self-discharge Characteristic", dr:"Drawing", noimg:"(no image)", miss:"(image not found)" }
 };
 /* Có in phần Đặc tính tự phóng cho sản phẩm này không (theo cột Group) */
@@ -820,13 +820,13 @@ const RES_COLS = [      // h: tiêu đề cột theo ngôn ngữ đang chọn (E
   {k:"Capacity",     h:{vi:"Dung lượng",       en:"Capacity"},     num:1, unit:r=>capacityRule(r.d).unit},
   {k:"CCA",          h:{vi:"CCA",              en:"CCA"},          num:1, unit:()=>"A"},
   {k:"RC",           h:{vi:"RC",               en:"RC"},           num:1, unit:vi=>vi?"phút":"min"},
-  {k:"Net weight",   h:{vi:"Trọng lượng tịnh", en:"Net weight"},   num:1, unit:()=>"kg", dec:2},
-  {k:"Gross Weight", h:{vi:"Trọng lượng tổng", en:"Gross weight"}, num:1, unit:()=>"kg", dec:2},
+  {k:"Net weight",   h:{vi:"Trọng lượng tịnh", en:"Net Weight"},   num:1, unit:()=>"kg", dec:2},
+  {k:"Gross Weight", h:{vi:"Trọng lượng tổng", en:"Gross Weight"}, num:1, unit:()=>"kg", dec:2},
   {k:"Cell Layout",  h:{vi:"Bố trí",           en:"Layout"},       num:1},
   {k:"Terminal",     h:{vi:"Cọc",              en:"Terminal"}},
-  {k:"Hold down",    h:{vi:"Chân đế",          en:"Hold down"}},
-   {k:"Positive Plate Quantity", h:{vi:"Số thẻ dương", en:"Positive plate quantity"}, num:1},
-  {k:"Negative Plate Quantity", h:{vi:"Số thẻ âm",    en:"Negative plate quantity"}, num:1}
+  {k:"Hold down",    h:{vi:"Chân đế",          en:"Hold Down"}},
+   {k:"Positive Plate Quantity", h:{vi:"Số thẻ dương", en:"Positive Plate Quantity"}, num:1},
+  {k:"Negative Plate Quantity", h:{vi:"Số thẻ âm",    en:"Negative Plate Quantity"}, num:1}
 ];
 const RES_TXT = {
   vi:{ found:n=>`Tìm thấy <b>${n}</b> chủng loại. Bấm tiêu đề cột để sắp xếp, bấm một dòng để xem data sheet.`,
