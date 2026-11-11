@@ -95,7 +95,7 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 .adv .opts input[type=number]{width:70px;padding:5px 8px}
 .adv .opts label{white-space:nowrap}
 .adv .acts{grid-column:1/-1;display:flex;gap:8px;align-items:center}
-.res{margin-top:12px;max-width:1280px;overflow-x:auto}
+.res{margin-top:12px;/*max-width:1280px;*/overflow-x:auto}
 .res .sum{font-size:13px;color:var(--muted);margin:0 0 6px}
 .res .sum.warn{color:#b35900}
 .res table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;min-width:760px}
@@ -816,11 +816,11 @@ const RES_COLS = [      // h: tiêu đề cột theo ngôn ngữ đang chọn (E
   {k:"RC",           h:{vi:"RC",               en:"RC"},           num:1, unit:vi=>vi?"phút":"min"},
   {k:"Net weight",   h:{vi:"Trọng lượng tịnh", en:"Net weight"},   num:1, unit:()=>"kg", dec:2},
   {k:"Gross Weight", h:{vi:"Trọng lượng tổng", en:"Gross weight"}, num:1, unit:()=>"kg", dec:2},
-  {k:"Positive Plates Quantity", h:{vi:"Số lá dương", en:"Positive plates"}, num:1},
-  {k:"Negative Plates Quantity", h:{vi:"Số lá âm",    en:"Negative plates"}, num:1},
   {k:"Cell Layout",  h:{vi:"Bố trí",           en:"Layout"},       num:1},
   {k:"Terminal",     h:{vi:"Cọc",              en:"Terminal"}},
-  {k:"Hold down",    h:{vi:"Chân đế",          en:"Hold down"}}
+  {k:"Hold down",    h:{vi:"Chân đế",          en:"Hold down"}},
+   {k:"Positive Plate Quantity", h:{vi:"Số thẻ dương", en:"Positive plate quantity"}, num:1},
+  {k:"Negative Plate Quantity", h:{vi:"Số thẻ âm",    en:"Negative plate quantity"}, num:1}
 ];
 const RES_TXT = {
   vi:{ found:n=>`Tìm thấy <b>${n}</b> chủng loại. Bấm tiêu đề cột để sắp xếp, bấm một dòng để xem data sheet.`,
@@ -884,7 +884,7 @@ const EXPORT_COLS = [   // [cột Excel nguồn, tiêu đề tiếng Việt, ti�
   ["Length","Dài (mm)","Length (mm)"], ["Width","Rộng (mm)","Width (mm)"], ["Height","Cao (mm)","Container Height (mm)"],
   ["Total Height","Tổng cao (mm)","Total Height (mm)"],
   ["Net weight","Trọng lượng tịnh (kg)","Net weight (kg)"], ["Gross Weight","Trọng lượng tổng (kg)","Gross weight (kg)"],
-  ["Positive Plates Quantity","Số lá dương","Positive plate quantity"], ["Negative Plates Quantity","Số lá âm","Negative plate quantity"],
+  ["Positive Plate Quantity","Số thẻ dương","Positive plate quantity"], ["Negative Plate Quantity","Số thẻ âm","Negative plate quantity"],
   ["Terminal","Loại cọc","Terminal"], ["Cell Layout","Bố trí cực tính","Cell layout"], ["Hold down","Chân đế","Hold down"],
   ["Container Type","Container Type","Container Type"], ["Material","Vật liệu vỏ","Container Material"]
 ];
