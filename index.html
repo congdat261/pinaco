@@ -67,6 +67,8 @@ tr.img .imgbox{height:100%}
 .drawfill{flex:1 1 auto;min-height:0;width:185mm;margin-left:-2.5mm;padding-top:6pt;display:flex}
 .drawfill .imgbox{flex:1;height:auto}
 body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
+/* Dòng chỉ xem trên màn hình: ẩn khi xuất PDF và khi in */
+body.pdfexport tr.screen-only{display:none}
 .stage.pdfmode{padding:0;gap:0;align-items:flex-start}
 .stage.pdfmode .page{box-shadow:none}
 
@@ -140,6 +142,7 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);max-width:min(560px,92vw);background:#1d2330;color:#fff;padding:12px 16px;border-radius:8px;font-size:14px;box-shadow:0 8px 24px #0004;opacity:0;pointer-events:none;transition:.25s;z-index:50}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media print{
+  tr.screen-only{display:none!important}
   @page{size:A4;margin:0}
   body{background:#fff}
   .toolbar,.placeholder,#toast,.adv,.zoombar{display:none!important}
@@ -539,12 +542,12 @@ const LABELS = {
   vi:{ t:"THÔNG SỐ KỸ THUẬT", m:"CHỦNG LOẠI:", spec:"Đặc tính kỹ thuật", volt:"Điện thế danh định", cap:"Dung lượng danh định (20 giờ)",
     cca:"Dòng khởi động lạnh (CCA)", rc:"Dung lượng dự trữ (RC)", min:"phút", dim:"Kích thước",
     len:"Dài", wid:"Rộng", hei:"Cao", th:"Tổng cao bao gồm cọc", nw:"Trọng lượng tịnh", gw:"Trọng lượng tổng", ap:"Khoảng",
-    term:"Loại cọc", lay:"Bố trí cực tính", hd:"Chân đế", mat:"Vật liệu vỏ, nắp ắc quy", temp:"Nhiệt độ hoạt động tối ưu",
+    term:"Loại cọc", lay:"Bố trí cực tính", hd:"Chân đế", mat:"Vật liệu vỏ, nắp ắc quy", pos:"Số lá cực dương", neg:"Số lá cực âm", temp:"Nhiệt độ hoạt động tối ưu",
     sd:"Đặc tính tự phóng", dr:"Bản vẽ", noimg:"(chưa có hình)", miss:"(không tải được hình)" },
   en:{ t:"TECHNICAL DATA SHEET", m:"MODEL:", spec:"Specification", volt:"Nominal Voltage", cap:"Nominal Capacity (20Hr)",
     cca:"Cold Cranking Amps (CCA)", rc:"Reserve Capacity (RC)", min:"Min", dim:"Dimensions",
     len:"Length", wid:"Width", hei:"Container Height", th:"Total Height (with Terminal)", nw:"Net weight", gw:"Gross weight", ap:"Approx",
-    term:"Terminal", lay:"Cell layout", hd:"Hold down", mat:"Battery Casing Material", temp:"Normal Operating Temp. Range",
+    term:"Terminal", lay:"Cell layout", hd:"Hold down", mat:"Battery Casing Material", pos:"Positive plate quantity", neg:"Negative plate quantity", temp:"Normal Operating Temp. Range",
     sd:"Self-discharge Characteristic", dr:"Drawing", noimg:"(no image)", miss:"(image not found)" }
 };
 /* Có in phần Đặc tính tự phóng cho sản phẩm này không (theo cột Group) */
@@ -585,6 +588,8 @@ function pages(d, vi){
       ${row(L.lay, esc(v(F("Cell Layout"))))}
       ${row(L.hd, esc(v(F("Hold down"))))}
       ${row(L.mat, esc(v(F("Material"))))}
+      ${row(L.pos, esc(v(F("Positive Plates Quantity")))).replace("<tr>",'<tr class="screen-only">')}
+      ${row(L.neg, esc(v(F("Negative Plates Quantity")))).replace("<tr>",'<tr class="screen-only">')}
       ${row(L.temp, esc(CONFIG.operatingTemp).replace(/([℃℉])/g,'<span class="sym">$1</span>'))}
       ${withSD ? sec(L.sd) + `<tr class="img"><td colspan="4">${box(imageInfo(CONFIG.images.selfDischarge, d, "Self Discharge"))}</td></tr>` : ""}
     </table>`;
