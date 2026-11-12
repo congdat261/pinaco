@@ -40,7 +40,7 @@ select,.btn{padding:9px 12px;font-size:14px;border:1px solid var(--line);border-
 .stage{padding:24px 12px;display:flex;flex-direction:column;align-items:center;gap:24px}
 .placeholder{margin-top:80px;color:var(--muted);text-align:center}
 /* ===== A4 page — theo file Word mẫu (lề T23 P17.4 D10 T15 mm, Calibri 13pt) ===== */
-.page{--b:#4472c4;width:210mm;height:297mm;background:#fff;padding:5mm 17.4mm 10mm 15mm;box-shadow:0 2px 12px #0002;
+.page{--b:#4472c4;width:210mm;min-height:297mm;background:#fff;padding:5mm 17.4mm 10mm 15mm;box-shadow:0 2px 12px #0002;
   font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;font-size:13pt;line-height:1.15;color:#000;display:flex;flex-direction:column;overflow:hidden}
 .hdr{width:185mm;margin-left:-2.5mm;display:grid;grid-template-columns:22.5mm 1fr;align-items:start;flex:none}
 .hdr .logo{padding:1.8mm 0}
@@ -70,7 +70,7 @@ body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 /* Dòng chỉ xem trên màn hình: ẩn khi xuất PDF và khi in */
 body.pdfexport tr.screen-only{display:none}
 .stage.pdfmode{padding:0;gap:0;align-items:flex-start}
-.stage.pdfmode .page{box-shadow:none}
+.stage.pdfmode .page{box-shadow:none;height:297mm;min-height:0}   /* xuất PDF: đúng khổ A4 */
 
 /* ===== Tìm kiếm nâng cao ===== */
 .adv{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 16px;display:none}
@@ -148,7 +148,7 @@ body.pdfexport tr.screen-only{display:none}
   .toolbar,.placeholder,#toast,.adv,.zoombar{display:none!important}
   .stage .page{zoom:1!important}
   .stage{padding:0;gap:0}
-  .page{box-shadow:none;page-break-after:always}
+  .page{box-shadow:none;page-break-after:always;height:297mm;min-height:0}   /* in: đúng khổ A4 */
   .imgbox .ph,.imgbox .miss{visibility:hidden}
   .page:last-child{page-break-after:auto}
 }
