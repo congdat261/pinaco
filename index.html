@@ -267,6 +267,10 @@ const CONFIG = {
   //    Không phân biệt chữ hoa/thường, khoảng trắng đầu/cuối. Để [] nếu mọi nhóm đều hiển thị.
   hideSelfDischargeGroups: ["ẮC QUY SODIUM GẮN MÁY", "ẮC QUY DÂN DỤNG", "ẮC QUY GOLF CART", "ẮC QUY VRLA CN NHỎ" ],
 
+  // 5b) Các Group (cột "Group") hiển thị thêm khối lượng có axit ở dòng Net / Gross weight,
+  //     vd "Approx 10.50 kg (with acid 18.20 kg)". Không phân biệt chữ hoa/thường.
+  acidWeightGroups: ["ẮC QUY MF Ô TÔ", "ẮC QUY MF TẢI"],
+
   // 6) Nhãn & đơn vị dòng "Dung lượng danh định" theo Group (không phân biệt hoa thường).
   //    Group không có trong danh sách dùng mặc định (dòng "default").
   capacityByGroup: {
@@ -542,12 +546,12 @@ const header = vi => { const c=vi?COMPANY.vi:COMPANY.en; return `
 const LABELS = {
   vi:{ t:"THÔNG SỐ KỸ THUẬT", m:"CHỦNG LOẠI:", spec:"Đặc tính kỹ thuật", volt:"Điện thế danh định", cap:"Dung lượng danh định (20 giờ)",
     cca:"Dòng khởi động lạnh (CCA)", rc:"Dung lượng dự trữ (RC)", min:"phút", dim:"Kích thước",
-    len:"Dài", wid:"Rộng", hei:"Cao", th:"Tổng cao bao gồm cọc", nw:"Trọng lượng tịnh", gw:"Trọng lượng tổng", ap:"Khoảng",
+    len:"Dài", wid:"Rộng", hei:"Cao", th:"Tổng cao bao gồm cọc", nw:"Trọng lượng tịnh", gw:"Trọng lượng tổng", ap:"Khoảng", acid:"có axit",
     term:"Loại cọc", lay:"Bố trí cực tính", hd:"Chân đế", mat:"Vật liệu vỏ, nắp ắc quy", pos:"Số thẻ dương", neg:"Số thẻ âm", temp:"Nhiệt độ hoạt động tối ưu",
     sd:"Đặc tính tự phóng", dr:"Bản vẽ", noimg:"(chưa có hình)", miss:"(không tải được hình)" },
   en:{ t:"TECHNICAL DATA SHEET", m:"MODEL:", spec:"Specification", volt:"Nominal Voltage", cap:"Nominal Capacity (20Hr)",
     cca:"Cold Cranking Amps (CCA)", rc:"Reserve Capacity (RC)", min:"Min", dim:"Dimensions",
-    len:"Length", wid:"Width", hei:"Container Height", th:"Total Height (with Terminal)", nw:"Net Weight", gw:"Gross Weight", ap:"Approx",
+    len:"Length", wid:"Width", hei:"Container Height", th:"Total Height (with Terminal)", nw:"Net Weight", gw:"Gross Weight", ap:"Approx", acid:"with acid",
     term:"Terminal", lay:"Layout", hd:"Hold Down", mat:"Battery Casing Material", pos:"Positive Plate Quantity", neg:"Negative Plate Quantity", temp:"Normal Operating Temp. Range",
     sd:"Self-discharge Characteristic", dr:"Drawing", noimg:"(no image)", miss:"(image not found)" }
 };
@@ -573,6 +577,9 @@ function pages(d, vi){
   const box=(info)=> info.url ? `<div class="imgbox" data-src="${esc(info.url)}" data-miss="${esc(L.miss)}"></div>`
       : `<div class="imgbox"><span class="ph">${L.noimg}<small class="diag">${esc(info.why)}</small></span></div>`;
   const nw=F("Net weight"), gw=F("Gross Weight");
+  // Nhóm trong CONFIG.acidWeightGroups: thêm "(có axit … kg)" / "(with acid … kg)" nếu ô Excel có giá trị
+  const acidGroup = (CONFIG.acidWeightGroups||[]).map(g=>String(g).trim().toUpperCase()).includes(String(F("Group")??"").trim().toUpperCase());
+  const withAcid = x => acidGroup && x!=="" && x!=null && !isNaN(toNum(x)) ? ` (${L.acid} ${num(x,2,vi)} kg)` : "";
   const withSD = hasSelfDischarge(d);
   const drawingUrl = imageInfo(CONFIG.images.drawing, d, "Drawing");
 
@@ -583,8 +590,8 @@ function pages(d, vi){
       ${row(L.rc, u(F("RC"),L.min))}
       ${row(L.cca, u(F("CCA"),"A"))}
       ${dim(L.dim,L.len,u(F("Length"),"mm"))}${dim("",L.wid,u(F("Width"),"mm"))}${dim("",L.hei,u(F("Height"),"mm"))}${dim("",L.th,u(F("Total Height"),"mm"))}
-      ${row(L.nw, nw===""?"–":`${L.ap} ${num(nw,2,vi)} kg`)}
-      ${row(L.gw, gw===""?"–":`${L.ap} ${num(gw,2,vi)} kg`)}
+      ${row(L.nw, nw===""?"–":`${L.ap} ${num(nw,2,vi)} kg${withAcid(F("Net weight with acid"))}`)}
+      ${row(L.gw, gw===""?"–":`${L.ap} ${num(gw,2,vi)} kg${withAcid(F("Gross weight with acid"))}`)}
       ${row(L.term, esc(v(F("Terminal"))))}
       ${row(L.lay, esc(v(F("Cell Layout"))))}
       ${row(L.hd, esc(v(F("Hold down"))))}
