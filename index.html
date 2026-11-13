@@ -52,7 +52,7 @@ select,.btn{padding:9px 12px;font-size:14px;border:1px solid var(--line);border-
 .rule{width:185mm;margin-left:-2.5mm;flex:none;height:7px;border-top:3px solid var(--b);border-bottom:1px solid var(--b);margin-bottom:3mm}
 .ttl{width:185mm;margin-left:-2.5mm;text-align:center;font-weight:bold;font-size:25pt;color:var(--b);line-height:1.1;flex:none/*;margin: 0 0 20px 0*/}
 .mdl{width:185mm;margin: 6pt 0 6pt -2.5mm;text-align:right;font-weight:bold;font-size:18pt;color:var(--b);flex:none}
-table.spec{width:185mm;margin-left:-2.5mm;border-collapse:collapse;table-layout:fixed;flex:none}
+table.spec{width:185mm;margin-left:-2.5mm;margin-top: 10pt;border-collapse:collapse;table-layout:fixed;flex:none}
 table.spec td{padding-top:3pt;vertical-align:bottom;border-bottom:.5pt solid #000;height:5mm}
 table.spec td.v,table.spec td.s{/*padding-left:calc(1.9mm + .7mm)*/}
 table.spec td.gap{border:none}
@@ -250,6 +250,7 @@ const CONFIG = {
     // Để "" nếu không muốn hiện mục tương ứng.
     terminal: "https://pinacovn-my.sharepoint.com/personal/datbc_pinaco_com/Documents/Data/DATA SHEET/Terminal.JPG",
     layout:   "https://pinacovn-my.sharepoint.com/personal/datbc_pinaco_com/Documents/Data/DATA SHEET/Layout.JPG",
+    holddown: "https://pinacovn-my.sharepoint.com/personal/datbc_pinaco_com/Documents/Data/DATA SHEET/Holddown.JPG",
 
     // Bản vẽ: chuyển từ công thức Excel ở cột Drawing.
     //   Thư mục chứa file Excel \ Group \ Container Type + hậu tố + ".JPG"
@@ -557,12 +558,12 @@ const LABELS = {
     cca:"Dòng khởi động lạnh (CCA)", rc:"Dung lượng dự trữ (RC)", min:"phút", dim:"Kích thước",
     len:"Dài", wid:"Rộng", hei:"Cao", th:"Tổng cao bao gồm cọc", nw:"Trọng lượng tịnh", gw:"Trọng lượng tổng", ap:"Khoảng", acid:"có axit",
     term:"Loại cọc", lay:"Bố trí cực tính", hd:"Chân đế", mat:"Vật liệu vỏ, nắp ắc quy", pos:"Số thẻ dương", neg:"Số thẻ âm", temp:"Nhiệt độ hoạt động tối ưu",
-    sd:"Đặc tính tự phóng", dr:"Bản vẽ", tm:"Loại cọc", ly:"Bố trí", noimg:"(chưa có hình)", miss:"(không tải được hình)" },
+    sd:"Đặc tính tự phóng", dr:"Bản vẽ", tm:"Loại cọc", ly:"Bố trí", hdn:"Chân đế", noimg:"(chưa có hình)", miss:"(không tải được hình)" },
   en:{ t:"TECHNICAL DATA SHEET", m:"MODEL:", spec:"Specification", volt:"Nominal Voltage", cap:"Nominal Capacity (20Hr)",
     cca:"Cold Cranking Amps (CCA)", rc:"Reserve Capacity (RC)", min:"Min", dim:"Dimensions",
     len:"Length", wid:"Width", hei:"Container Height", th:"Total Height (with Terminal)", nw:"Net Weight", gw:"Gross Weight", ap:"Approx", acid:"with acid",
     term:"Terminal", lay:"Layout", hd:"Hold Down", mat:"Battery Casing Material", pos:"Positive Plate Quantity", neg:"Negative Plate Quantity", temp:"Normal Operating Temp. Range",
-    sd:"Self-discharge Characteristic", dr:"Drawing", tm:"Terminal", ly:"Layout", noimg:"(no image)", miss:"(image not found)" }
+    sd:"Self-discharge Characteristic", dr:"Drawing", tm:"Terminal", ly:"Layout", hdn:"Hold Down", noimg:"(no image)", miss:"(image not found)" }
 };
 /* Có in phần Đặc tính tự phóng cho sản phẩm này không (theo cột Group) */
 /* Nhãn + đơn vị dòng dung lượng theo Group */
@@ -612,15 +613,17 @@ function pages(d, vi){
     </table>`;
   // Bản vẽ (co giãn theo chỗ trống) + Loại cọc + Bố trí (chiều cao cố định) ngay bên dưới
   const extra = (label,tpl)=> tpl ? `<table class="spec">${COLS}${sec(label)}</table><div class="extrafig">${box(imageInfo(tpl, d, ""))}</div>` : "";
-  const drawing = `<table class="spec">${COLS}${sec(L.dr)}</table><div class="drawfill">${box(drawingUrl)}</div>`
-                + extra(L.tm, CONFIG.images.terminal) + extra(L.ly, CONFIG.images.layout);
+  const figs = extra(L.tm, CONFIG.images.terminal) + extra(L.ly, CONFIG.images.layout) + extra(L.hdn, CONFIG.images.holddown);
+  const drawOnly = `<table class="spec">${COLS}${sec(L.dr)}</table><div class="drawfill">${box(drawingUrl)}</div>`;
+  const drawing = drawOnly + figs;
   const top = `${header(vi)}<div class="ttl">${L.t}</div><div class="mdl">${L.m} ${esc(d.Model)}</div>`;
   // <div class="mdl">${L.m} ${esc(d.Model)}</div>`
 
   // Nhóm có Self-discharge: Drawing sang trang riêng (như file Word). Nhóm khác: gọn trong 1 trang.
   return withSD
     ? `<section class="page">${top}${specTable}</section><section class="page">${header(vi)}${drawing}</section>`
-    : `<section class="page">${top}${specTable}${drawing}</section>`;
+    // Nhóm không có Self-discharge: trang 1 = thông số + Bản vẽ; trang 2 = Loại cọc, Bố trí, Chân đế
+    : `<section class="page">${top}${specTable}${drawOnly}</section>` + (figs ? `<section class="page">${header(vi)}${figs}</section>` : "");
 }
 
 /* Tải ảnh: ảnh trên SharePoint/OneDrive đi qua Graph (để PDF nhúng được ảnh), ảnh khác tải trực tiếp */
