@@ -64,12 +64,11 @@ table.spec tr.img td{border:none;height:110mm;padding:6pt 0 0;vertical-align:top
 .imgbox{display:flex;align-items:flex-start;justify-content:center;width:100%;height:100%;font-size:10pt;color:#999;font-style:italic}
 .imgbox img{max-width:100%;max-height:100%;object-fit:contain;BORDER: SOLID 1PX LIGHTGREY;}
 tr.img .imgbox{height:100%}
-.drawfill{flex:1 1 auto;min-height:0;width:185mm;margin:0 0 8pt -2.5mm;padding-top:6pt;display:flex}
+.drawfill{flex:1 1 auto;min-height:140mm;width:185mm;margin:0 0 8pt -2.5mm;padding-top:6pt;display:flex}
 .drawfill .imgbox{flex:1;height:auto}
 /* Hình Loại cọc / Bố trí dưới Bản vẽ: cao cố định, Bản vẽ co lại cho vừa trang */
 .extrafig{flex:none;/*height:var(--extra-h,38mm)*/;width:185mm;margin:0 0 8pt -2.5mm;padding-top:4pt;display:flex}
 .extrafig .imgbox{flex:1;height:auto}
-.drawfill{min-height:140mm}
 body.pdfexport .imgbox .ph,body.pdfexport .imgbox .miss{visibility:hidden}
 /* Dòng chỉ xem trên màn hình: ẩn khi xuất PDF và khi in */
 body.pdfexport tr.screen-only{display:none}
@@ -403,7 +402,7 @@ async function graphDownload(url){
       const p = rel.split("/").map(encodeURIComponent).join("/");
       const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${f.driveId}/items/${f.id}:/${p}:/content`, H);
       if(r.ok) return r;
-      if(r.status===404) throw new Error(`không có file “${rel.split("/").pop()}” trong thư mục chia sẻ (404) — kiểm tra tên file, chữ hoa/thường`);
+      if(r.status===404) throw new Error(`không có file “${rel.split("/").pop()}” trong thư mục chia sẻ (404)`);
       if(r.status!==403) throw new Error("Graph "+r.status);
       // 403: thử tiếp cách đọc trực tiếp bên dưới
     }
@@ -632,12 +631,12 @@ function fetchImage(url){
   if(imgCache.has(url)) return imgCache.get(url);
   const p = (async()=>{
     if(isSharePoint(url)){
-      if(!pca) throw new Error("hình nằm trên SharePoint/OneDrive nhưng chưa kết nối được Microsoft 365");
-      if(!account) throw new Error("hình nằm trên SharePoint/OneDrive — hãy bấm “Đăng nhập Microsoft 365”");
+      if(!pca) throw new Error("Hình nằm trên SharePoint/OneDrive nhưng chưa kết nối được Microsoft 365");
+      if(!account) throw new Error("Hình nằm trên SharePoint/OneDrive — hãy bấm “Đăng nhập Microsoft 365”");
       return URL.createObjectURL(await (await graphDownload(url)).blob());
     }
     try{ const r=await fetch(url,{mode:"cors"}); if(r.ok) return URL.createObjectURL(await r.blob());
-         if(r.status===404) throw new Error("không có file hình tại đường dẫn này (404) — kiểm tra tên file, chữ hoa/thường"); }
+         if(r.status===404) throw new Error("không có file hình tại đường dẫn này (404)"); }
     catch(e){ if(/404/.test(e.message)) throw e; }
     return url;   // máy chủ không cho CORS: vẫn thử hiển thị trực tiếp
   })();
