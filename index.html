@@ -542,7 +542,11 @@ q.addEventListener("keydown",ev=>{
   lis.forEach((li,i)=>li.classList.toggle("active",i===act)); lis[act]?.scrollIntoView({block:"nearest"});
 });
 lst.addEventListener("mousedown",ev=>{const li=ev.target.closest("li[data-k]"); if(li){ev.preventDefault(); pick(+li.dataset.k);}});
-$("#chev").addEventListener("click",()=>{ lst.classList.contains("open")?closeList():(q.focus(),openList(true)); });
+$("#chev").addEventListener("click",()=>{
+  if(lst.classList.contains("open")){ closeList(); return; }
+  q.value="";                       // xoá chủng loại đã chọn trước đó để chọn lại từ đầu
+  q.focus(); openList(true);
+});
 document.addEventListener("click",ev=>{ if(!$("#combo").contains(ev.target)) closeList(); });
 
 /* ============ HIỂN THỊ DATA SHEET ============ */
