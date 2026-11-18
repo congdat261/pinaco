@@ -6,6 +6,7 @@
 <title>PINACO Technical Data Sheet</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- Thư viện đăng nhập Microsoft: ưu tiên bản đặt cùng thư mục, nếu thiếu thì lấy từ CDN -->
 <script src="msal-browser.min.js"></script>
 <script>window.msal||document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.28.1/lib/msal-browser.min.js"><\/script>')</script>
@@ -765,7 +766,11 @@ $("#pdf").addEventListener("click",async()=>{
         // chụp từng trang thành ảnh rồi đặt vừa khổ A4 → không lệch, không có trang trắng
         const doc = await html2pdf().set({jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}, margin:0}).from("<div></div>").toPdf().get("pdf");
         for(let i=0;i<pages.length;i++){
-          const cv = await html2pdf().set({html2canvas:h2c}).from(pages[i]).toCanvas().get("canvas");
+          // Chụp trực tiếp đúng khung trang A4 đang hiển thị (không qua khung tạm của html2pdf) → không bị lệch ngang
+          const cv = window.html2canvas
+            ? await html2canvas(pages[i], {scale:2, useCORS:true, backgroundColor:"#ffffff",
+                width:pages[i].offsetWidth, height:pages[i].offsetHeight})
+            : await html2pdf().set({html2canvas:h2c}).from(pages[i]).toCanvas().get("canvas");
           let w=210, h=w*cv.height/cv.width; if(h>297){ h=297; w=h*cv.width/cv.height; }
           if(i) doc.addPage(); else doc.setPage(1);
           doc.addImage(cv.toDataURL("image/jpeg",0.95),"JPEG",(210-w)/2,0,w,h);
